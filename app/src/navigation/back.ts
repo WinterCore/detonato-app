@@ -1,3 +1,5 @@
+import { App } from '@capacitor/app'
+import { Capacitor } from '@capacitor/core'
 import { useCallback, useLayoutEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -22,4 +24,26 @@ export function useScrollToTop(): void {
     // A block, not an arrow's value: Chrome's scrollTo returns a promise, and an effect may return only its cleanup.
     window.scrollTo(0, 0)
   }, [pathname])
+}
+
+/**
+ * Android's back button. `@capacitor/app` takes it over: left alone, it goes
+ * back through the web view's history and, with none left, does nothing, so
+ * back on the first screen was dead. Here it goes back through the history
+ * (a screen, an open sheet), and with none left it leaves the app for the
+ * home screen, as Android's own back does. Called once, after boot. Returns
+ * a stop function.
+ */
+export function followBackButton(): () => void {
+  if (Capacitor.getPlatform() !== 'android') {
+    return () => {}
+  }
+  const listening = App.addListener('backButton', ({ canGoBack }) => {
+    if (canGoBack) {
+      window.history.back()
+      return
+    }
+    void App.minimizeApp()
+  })
+  return () => void listening.then((l) => l.remove())
 }

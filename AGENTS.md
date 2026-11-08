@@ -273,9 +273,9 @@ maps its files, and screens import from `@/state` only (lint enforces it).
   screen's hook.
 - **Sheets live in the history.** `navigation/sheet.ts › useSheetEntry`
   pushes `#name` while a sheet is open, so back (the browser's, or
-  Android's, which Capacitor sends through the WebView's history) closes
-  the sheet instead of leaving the screen. Escape closes it too. Every sheet
-  uses it.
+  Android's, which `navigation/back › followBackButton` sends through the
+  history, leaving the app when there's none) closes the sheet instead of
+  leaving the screen. Escape closes it too. Every sheet uses it.
 
 ## The segment display
 

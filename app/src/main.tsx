@@ -4,6 +4,7 @@ import { followDisplay } from '@/lib/applyDisplay'
 import { followDay } from '@/lib/clock'
 import { followSession } from '@/lib/session'
 import { takeCommands } from '@/lib/sessionNotice'
+import { followBackButton } from '@/navigation/back'
 import { boot } from '@/state'
 import App from './App.tsx'
 import './index.css'
@@ -23,13 +24,15 @@ document.addEventListener('gesturestart', (e) => e.preventDefault())
  * which replays them before it settles the session. After that
  * `followDisplay` keeps <html> in step with the LED settings, `followSession`
  * does what a session does off its screen (its end, the notification, the
- * screen kept on), and `followDay` moves "today" on at midnight.
+ * screen kept on), `followDay` moves "today" on at midnight, and
+ * `followBackButton` gives Android's back button to the history.
  */
 async function start() {
   await boot(await takeCommands())
   followDisplay()
   followSession()
   followDay()
+  followBackButton()
   root.render(
     <StrictMode>
       <App />
