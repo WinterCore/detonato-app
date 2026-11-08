@@ -1,0 +1,142 @@
+---
+import Display from '../components/Display.astro'
+import DesignMarquee from '../components/DesignMarquee.astro'
+import Heatmap from '../components/Heatmap.astro'
+import HeroGrid from '../components/HeroGrid.astro'
+import Base from '../layouts/Base.astro'
+import { DOWNLOADS, WEB_APP_URL } from '../lib/downloads'
+
+const REPO_URL = 'https://github.com/WinterCore/detonato-app'
+const POSY_URL = 'https://michieldb.nl'
+
+const FEATURES = [
+  {
+    label: '3 × 50 min · weekdays',
+    title: 'Tasks in sessions',
+    body: 'Give each task its days and how many sessions it takes. The day fills as you do them.',
+  },
+  {
+    label: '88 designs · 5 colours',
+    title: 'A real segment display',
+    body: 'Every session counts down on an LED display you pick, each segment lit on its own.',
+  },
+  {
+    label: 'Streaks · a year at a glance',
+    title: 'A record that holds',
+    body: 'Every day is a square, shaded by how much got done. Change a task, and the past stays as it was.',
+  },
+]
+---
+
+<Base title="Detonato · A pomodoro for the day you planned" description="List what you do each day, give each task its sessions, and watch every one count down on a segment display.">
+  <main>
+    <section class="relative isolate flex min-h-dvh flex-col items-center justify-center overflow-hidden px-6 py-20" data-motion>
+      <HeroGrid />
+      <div class="relative flex flex-col items-center gap-8 text-center">
+        <span class="rise font-mono text-xs tracking-[0.35em] text-ink-3 uppercase">Detonato</span>
+        <div class="relative">
+          <span class="hero-halo absolute -inset-x-1/4 -inset-y-full -z-10" aria-hidden="true"></span>
+          <Display design="sports-1" text="25:00" size="min(176px, calc((100vw - 48px) / 2.9))" label="A countdown from 25:00" countdown />
+        </div>
+        <div class="rise grid max-w-xl gap-4" style="--delay: 500ms">
+          <h1 class="text-[clamp(2rem,6vw,3.5rem)] leading-[1.05] font-semibold tracking-tight text-balance">A pomodoro for the day you planned.</h1>
+          <p class="text-base text-pretty text-ink-2 sm:text-lg">
+            List what you do every day, or on chosen days. Give each task its sessions. Watch them count down on a segment display, and keep the streak
+            going.
+          </p>
+        </div>
+        <div class="rise grid justify-items-center gap-5" style="--delay: 800ms">
+          <div class="flex flex-wrap items-center justify-center gap-3">
+            <a
+              href={DOWNLOADS.android.href}
+              download
+              class="inline-flex items-center gap-2.5 rounded-full bg-led px-5 py-2.5 font-medium text-on-led shadow-[0_0_28px_-8px_var(--led)] transition hover:brightness-110"
+            >
+              <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"></path></svg>
+              Android
+              <span class="font-mono text-[11px] opacity-70">{DOWNLOADS.android.meta}</span>
+            </a>
+            <a
+              href={DOWNLOADS.iphone.href}
+              download
+              class="inline-flex items-center gap-2.5 rounded-full border border-led-ring px-5 py-2.5 font-medium text-led transition-colors hover:bg-led hover:text-on-led"
+            >
+              <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"></path></svg>
+              iPhone
+              <span class="font-mono text-[11px] opacity-70">{DOWNLOADS.iphone.meta}</span>
+            </a>
+            <a
+              href={WEB_APP_URL}
+              class="inline-flex items-center gap-2.5 rounded-full border border-line px-5 py-2.5 font-medium text-ink-2 transition-colors hover:border-edge hover:text-ink"
+            >
+              <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"></path></svg>
+              Open in your browser
+            </a>
+          </div>
+          <p class="max-w-md text-xs text-pretty text-ink-3">
+            Not on the App Store or Google Play. On Android, let your browser install the app when it asks. On iPhone, install the file with <a
+              class="underline decoration-line underline-offset-2 hover:text-ink-2"
+              href="https://altstore.io">AltStore</a
+            >, <a class="underline decoration-line underline-offset-2 hover:text-ink-2" href="https://sidestore.io">SideStore</a> or <a
+              class="underline decoration-line underline-offset-2 hover:text-ink-2"
+              href="https://sideloadly.io">Sideloadly</a
+            >.
+          </p>
+          <a href={REPO_URL} class="inline-flex items-center gap-2 font-mono text-xs text-ink-3 transition-colors hover:text-ink-2">
+            <svg class="size-3.5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"
+              ><path
+                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+              ></path></svg
+            >
+            Open source on GitHub
+          </a>
+        </div>
+      </div>
+      <a href="#days" class="rise absolute bottom-8 hidden flex-col items-center gap-2 font-mono text-[11px] text-ink-3 hover:text-ink-2 sm:flex" style="--delay: 1200ms">
+        Scroll
+        <svg class="pulse size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+      </a>
+    </section>
+
+    <section id="days" class="mx-auto grid max-w-5xl gap-16 px-6 py-24 sm:py-32">
+      <div class="grid gap-10 lg:grid-cols-[1fr_1.4fr] lg:items-center lg:gap-16">
+        <div class="grid gap-4">
+          <span class="font-mono text-xs tracking-[0.3em] text-led uppercase">The record</span>
+          <h2 class="text-[clamp(1.75rem,4.5vw,2.75rem)] leading-tight font-semibold tracking-tight">Every day, lit.</h2>
+          <p class="text-pretty text-ink-2">Each square is a day, shaded by how much of it you got done. Clear them all and the run goes on.</p>
+        </div>
+        <Heatmap />
+      </div>
+
+      <ul class="grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3">
+        {
+          FEATURES.map((f) => (
+            <li class="grid content-start gap-3 bg-bg p-6">
+              <span class="font-mono text-[11px] text-led">{f.label}</span>
+              <h3 class="text-lg font-medium">{f.title}</h3>
+              <p class="text-sm text-pretty text-ink-2">{f.body}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section class="grid gap-6 pb-24" aria-label="Some of the 88 display designs">
+      <DesignMarquee />
+      <p class="px-6 text-center text-sm text-pretty text-ink-2 sm:text-base">
+        Segment designs by <a class="text-ink underline decoration-line underline-offset-4 hover:decoration-ink-3" href={POSY_URL}>Posy (Michiel de Boer)</a>, from
+        his Segmented Display Designs Sheet.
+      </p>
+    </section>
+  </main>
+
+  <footer class="mx-auto flex max-w-5xl flex-col gap-2 border-t border-line px-6 py-8 text-sm text-ink-3 sm:flex-row sm:justify-between">
+    <span>© Detonato · non-commercial</span>
+    <span>Open source (MIT) on <a class="text-ink-2 underline decoration-line underline-offset-4 hover:text-ink" href={REPO_URL}>GitHub</a></span>
+  </footer>
+</Base>
+
+<script>
+  import '../scripts/countdown'
+  import '../scripts/reveal'
+</script>

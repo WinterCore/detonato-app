@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Detonato</string>
+    <string name="title_activity_main">Detonato</string>
+    <string name="package_name">xyz.wintercore.detonato</string>
+    <string name="custom_url_scheme">xyz.wintercore.detonato</string>
+</resources>

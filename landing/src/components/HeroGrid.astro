@@ -1,0 +1,45 @@
+---
+/*
+ * Behind the hero: a field of day squares in the app's heat shades, one in
+ * six breathing on and off: a ring round the hero, clear in the middle
+ * where the countdown and the words are, fading out toward the edges. The
+ * shades, delays and speeds look random but are the same on every build.
+ *
+ * Kept cheap to draw: the clearing and the fade are a gradient painted over
+ * the squares, not a mask, so a breathing square never redraws the field;
+ * and the page pauses it all once the hero is out of view (`data-motion`).
+ */
+import { noise } from '../lib/glyphs'
+
+const COLS = 28
+const ROWS = 18
+const SHADES = ['bg-lvl-1', 'bg-lvl-2', 'bg-lvl-3', 'bg-lvl-4']
+
+interface Cell {
+  key: number
+  shade: string
+  /** Breathing: its delay and its speed. */
+  style: string
+  breathes: boolean
+}
+
+function cellAt(i: number): Cell {
+  const n = noise(i)
+  if (n > 0.17) {
+    return { key: i, shade: 'bg-lvl-0', style: '', breathes: false }
+  }
+  const shade = SHADES[Math.floor(noise(i + 1000) * SHADES.length)]
+  const delay = Math.round(noise(i + 2000) * -9000)
+  const t = 4 + Math.round(noise(i + 3000) * 5)
+  return { key: i, shade, style: `--delay: ${delay}ms; --t: ${t}s`, breathes: true }
+}
+
+const cells = Array.from({ length: COLS * ROWS }, (_, i) => cellAt(i))
+---
+
+<div class="pointer-events-none absolute inset-0 grid place-items-center overflow-hidden" aria-hidden="true">
+  <div class="grid gap-2 opacity-30 sm:opacity-45" style={`grid-template-columns: repeat(${COLS}, 2.25rem)`}>
+    {cells.map((c) => <span class:list={['size-9 rounded-md', c.shade, { breathe: c.breathes }]} style={c.style} />)}
+  </div>
+  <div class="absolute inset-0" style="background: radial-gradient(ellipse 72% 68% at 50% 45%, var(--bg) 38%, transparent 60%, transparent 70%, var(--bg) 90%)"></div>
+</div>

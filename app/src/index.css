@@ -1,0 +1,54 @@
+@import 'tailwindcss';
+@import './styles/theme.css';
+
+@layer base {
+  html {
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    /* No grey flash on a tap: controls give their own feedback (`press`). */
+    -webkit-tap-highlight-color: transparent;
+    /* No double-tap zoom — iOS ignores the viewport's `user-scalable=no` (main.tsx holds its pinch). */
+    touch-action: manipulation;
+  }
+  /* The page stops dead at its ends, like an app: no rubber-band bounce, no pull-to-refresh. */
+  html,
+  body {
+    overscroll-behavior: none;
+  }
+  body {
+    min-height: 100svh;
+    font-size: var(--text-body);
+    line-height: 1.5;
+    /* No text is there to select, like an app's. A field's own text still selects. */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+  input,
+  textarea {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+  button,
+  [role='button'] {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--led);
+    outline-offset: 2px;
+  }
+}
+
+/* Motion off: everything lands in its end state at once. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+}

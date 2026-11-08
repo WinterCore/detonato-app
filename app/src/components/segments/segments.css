@@ -1,0 +1,76 @@
+/*
+ * The segment display. Each digit is two stacked SVGs of the same segments:
+ * the ghost layer, every segment in the unlit colour, and the lit layer, each
+ * segment its own <g data-seg> switched on or off alone (`.on`). Segments
+ * fade as they change; the sweep lights them in order (`--d` the digit,
+ * `--i` the segment).
+ *
+ * The glow is a drop-shadow on the lit layer — a blur, against the usual
+ * no-blur rule, by choice: it's the display's look (AGENTS.md).
+ */
+.seg-display {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0.1em;
+  line-height: 0;
+}
+.seg-digit,
+.seg-mark {
+  position: relative;
+  display: block;
+  height: 1em;
+  flex: none;
+}
+.seg-digit svg,
+.seg-mark svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* Direct children only: a matrix design's segment is a group of cells, and its inner groups take the fill. */
+.seg-digit .ghost > g,
+.seg-mark .ghost > * {
+  fill: var(--led-ghost);
+}
+.seg-digit .lit > g {
+  fill: var(--led);
+  opacity: 0;
+  transition: opacity 140ms ease-out;
+}
+.seg-digit .lit > g.on {
+  opacity: 1;
+}
+.seg-mark .lit > * {
+  fill: var(--led);
+}
+.seg-mark.dim .lit > * {
+  fill: var(--ink-3);
+}
+.glow .seg-digit .lit,
+.glow .seg-mark .lit {
+  filter: drop-shadow(0 0 0.05em var(--led-glow));
+}
+
+/* The sweep: every segment off at once, then on again digit by digit, segment by segment. */
+.seg-display.blank .lit > g {
+  opacity: 0;
+  transition: none;
+}
+.seg-display.sweep .lit > g {
+  transition-duration: 220ms;
+  transition-delay: calc(var(--d) * 110ms + var(--i) * 32ms);
+}
+
+.seg-display.blink .seg-mark .lit {
+  animation: seg-blink 1s steps(1) infinite;
+}
+.seg-display.flash .lit {
+  animation: seg-blink 0.7s steps(1) infinite;
+}
+@keyframes seg-blink {
+  50% {
+    opacity: 0;
+  }
+}

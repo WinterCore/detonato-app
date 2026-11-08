@@ -1,0 +1,53 @@
+/*
+ * Raw theme values. Nothing here is a utility on its own; `theme.css ›
+ * @theme inline` maps these onto Tailwind names.
+ *
+ * One theme only: the app is a piece of hardware, a near-black panel with
+ * LED segments, and it never changes with the phone's light or dark mode.
+ *
+ * The LED is the one thing that moves: `lib/applyDisplay` sets `--led` and
+ * `--ghost` on <html> from the settings, and every shade below is mixed from
+ * them, so a colour change reaches the whole app at once.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* ─── The hardware ─── */
+  --bg: #0b0c0d;
+  /* A display's recessed window: darker than the ground. */
+  --window: #060707;
+  --panel: #141618;
+  --raised: #1c1f22;
+  --line: #272b2f;
+  /* A sheet's top edge, and a pressed segmented button's ring. */
+  --edge: #34393e;
+  --grabber: #3a3f44;
+  --rest: #30353a;
+  --scrim: rgb(0 0 0 / 0.62);
+
+  /* ─── Ink: 1 strongest, 3 quietest ─── */
+  --ink: #ebe9e4;
+  --ink-2: #a9aaa4;
+  --ink-3: #8a8b84;
+  /* Text and icons on a lit LED fill. */
+  --on-led: #0b0c0d;
+  /* Delete: the one warm warning, never a fill. */
+  --warn: #ff8f7d;
+
+  /* ─── The LED (lib/applyDisplay) ─── */
+  --led: #ffb000;
+  /* How strongly unlit segments show: core/settings.ts › GHOSTS. */
+  --ghost: 8%;
+  --led-ghost: color-mix(in srgb, var(--led) var(--ghost), transparent);
+  --led-glow: color-mix(in srgb, var(--led) 55%, transparent);
+  /* Shades of the LED over the panel: the heatmap's levels, pips, chips. */
+  --lvl-0: color-mix(in oklab, var(--led) 10%, var(--panel));
+  --lvl-1: color-mix(in oklab, var(--led) 30%, var(--panel));
+  --lvl-2: color-mix(in oklab, var(--led) 52%, var(--panel));
+  --lvl-3: color-mix(in oklab, var(--led) 76%, var(--panel));
+  --lvl-4: var(--led);
+  --led-fill: color-mix(in oklab, var(--led) 18%, var(--panel));
+  --led-ring: color-mix(in oklab, var(--led) 45%, transparent);
+  --led-track: color-mix(in oklab, var(--led) 70%, var(--panel));
+}

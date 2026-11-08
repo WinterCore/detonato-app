@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Detonato</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a review canvas (follows the viewer's theme) holding rows of always-dark phone frames, grouped by flow. */
+:root {
+  --canvas: #e3e4e1;
+  --canvas-card: #eeefec;
+  --canvas-ink: #16181a;
+  --canvas-ink-2: #4f5356;
+  --canvas-line: #c6c8c4;
+  --canvas-bar: #e3e4e1;
+
+  /* The hardware never changes theme. */
+  --hw-bg: #0b0c0d;
+  --hw-window: #060707;
+  --hw-panel: #141618;
+  --hw-raised: #1c1f22;
+  --hw-line: #272b2f;
+  --hw-ink: #ebe9e4;
+  --hw-ink-2: #a9aaa4;
+  --hw-ink-3: #8a8b84;
+
+  --led: #ffb000;
+  --ghost: 9%;
+  --led-ghost: color-mix(in srgb, var(--led) var(--ghost), transparent);
+  --led-glow: color-mix(in srgb, var(--led) 55%, transparent);
+  --lvl-0: color-mix(in oklab, var(--led) 10%, var(--hw-panel));
+  --lvl-1: color-mix(in oklab, var(--led) 30%, var(--hw-panel));
+  --lvl-2: color-mix(in oklab, var(--led) 52%, var(--hw-panel));
+  --lvl-3: color-mix(in oklab, var(--led) 76%, var(--hw-panel));
+  --lvl-4: var(--led);
+
+  --font-ui: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --canvas: #0e0f10; --canvas-card: #161819; --canvas-ink: #e6e6e1; --canvas-ink-2: #a0a29d;
+    --canvas-line: #2a2d30; --canvas-bar: #0e0f10; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --canvas: #0e0f10; --canvas-card: #161819; --canvas-ink: #e6e6e1; --canvas-ink-2: #a0a29d;
+  --canvas-line: #2a2d30; --canvas-bar: #0e0f10; color-scheme: dark;
+}
+
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+[hidden] { display: none !important; }
+body {
+  background: var(--canvas);
+  color: var(--canvas-ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 30; background: var(--canvas-bar);
+}
+.gutter {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.mono { font-family: var(--font-mono); }
+.eyebrow { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--led); outline-offset: 2px; }
+
+/* ---------- segment display ---------- */
+.seg-display { display: inline-flex; align-items: stretch; gap: .1em; line-height: 0; }
+.seg-digit { position: relative; display: block; height: 1em; flex: none; }
+.seg-digit svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.seg-digit .ghost > g { fill: var(--led-ghost); }
+.seg-digit .lit > g { fill: var(--led); opacity: 0; transition: opacity 140ms ease-out; }
+.seg-digit .lit > g.on { opacity: 1; }
+.glow .seg-digit .lit, .glow .seg-mark .lit { filter: drop-shadow(0 0 .05em var(--led-glow)); }
+.seg-display.blank .lit > g { opacity: 0; transition: none; }
+.seg-display.sweep .lit > g { transition-duration: 220ms; transition-delay: calc(var(--d) * 110ms + var(--i) * 32ms); }
+.seg-mark { position: relative; display: block; height: 1em; flex: none; }
+.seg-mark svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.seg-mark .ghost * { fill: var(--led-ghost); }
+.seg-mark .lit * { fill: var(--led); }
+.seg-mark.dim .lit * { fill: var(--hw-ink-3); }
+.seg-display.blink .seg-mark .lit { animation: blink 1s steps(1) infinite; }
+.seg-display.flash .lit { animation: blink .7s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ---------- phone ---------- */
+.phone-slot { zoom: var(--phone-zoom, 1); }
+.phone {
+  position: relative; width: 390px; height: 844px; border-radius: 52px; overflow: hidden;
+  background: var(--hw-bg); color: var(--hw-ink); font-family: var(--font-ui); font-size: 15px;
+  box-shadow: 0 0 0 9px #030303, 0 0 0 10px #34383c, 0 40px 60px -30px rgb(0 0 0 / .5);
+  margin: 10px;
+  isolation: isolate;
+}
+.phone .status {
+  position: absolute; inset: 0 0 auto; height: 50px; z-index: 20; display: flex; align-items: center;
+  justify-content: space-between; padding: 0 30px 0 38px; font-weight: 600; font-size: 15px; pointer-events: none;
+}
+.phone .island { position: absolute; left: 50%; top: 11px; width: 118px; height: 34px; margin-left: -59px; border-radius: 20px; background: #000; }
+.phone .home { position: absolute; left: 50%; bottom: 8px; width: 134px; height: 5px; margin-left: -67px; border-radius: 3px; background: var(--hw-ink-2); z-index: 20; pointer-events: none; }
+.phone .screen { position: absolute; inset: 0; padding-top: 54px; display: flex; flex-direction: column; }
+.phone .scroll { grid-template-columns: minmax(0, 1fr); flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; padding-bottom: 32px; }
+.phone .scroll::-webkit-scrollbar { display: none; }
+
+.hw-label { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--hw-ink-3); }
+.hw-card { background: var(--hw-panel); border: 1px solid var(--hw-line); border-radius: 18px; }
+.hw-card.grid { grid-template-columns: minmax(0, 1fr); }
+.hw-window {
+  background: var(--hw-window); border-radius: 16px;
+  box-shadow: inset 0 0 0 1px #1d2023, inset 0 10px 24px -12px rgb(0 0 0 / .9);
+}
+.icon-btn {
+  width: 44px; height: 44px; display: inline-grid; place-items: center; border-radius: 14px;
+  color: var(--hw-ink-2); background: transparent; transition: background-color 120ms, color 120ms;
+}
+.icon-btn:hover { background: var(--hw-raised); color: var(--hw-ink); }
+.btn-led {
+  min-height: 52px; border-radius: 16px; padding: 0 22px; background: var(--led); color: #0b0c0d;
+  font-weight: 600; box-shadow: 0 0 24px -8px var(--led-glow);
+}
+.btn-quiet { min-height: 52px; border-radius: 16px; padding: 0 22px; background: var(--hw-raised); color: var(--hw-ink); font-weight: 500; }
+.pip { width: 9px; height: 9px; border-radius: 2px; background: var(--lvl-0); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--led) 22%, transparent); }
+.pip.on { background: var(--led); box-shadow: 0 0 6px -1px var(--led-glow); }
+.pip.live { background: var(--led); animation: breathe 1.6s ease-in-out infinite; }
+@keyframes breathe { 50% { opacity: .35; } }
+.cell { border-radius: 3px; }
+.cell.l0 { background: var(--lvl-0); }
+.cell.l1 { background: var(--lvl-1); }
+.cell.l2 { background: var(--lvl-2); }
+.cell.l3 { background: var(--lvl-3); }
+.cell.l4 { background: var(--lvl-4); }
+.glow .cell.l4 { box-shadow: 0 0 6px -1px var(--led-glow); }
+.cell.rest { box-shadow: inset 0 0 0 1px #30353a; }
+.cell.today { outline: 1.5px solid var(--hw-ink); outline-offset: 1px; }
+.cell.future { background: transparent; }
+.chip {
+  min-width: 34px; height: 30px; padding: 0 6px; border-radius: 9px; display: inline-grid; place-items: center;
+  font-family: var(--font-mono); font-size: 12px; color: var(--hw-ink-3); background: var(--hw-raised);
+}
+.chip.on { background: color-mix(in oklab, var(--led) 18%, var(--hw-panel)); color: var(--led); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--led) 45%, transparent); }
+.toggle { width: 50px; height: 30px; border-radius: 15px; background: var(--hw-line); position: relative; flex: none; transition: background-color 150ms; }
+.toggle::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 12px; background: var(--hw-ink-2); transition: transform 150ms, background-color 150ms; }
+.toggle[aria-checked="true"] { background: color-mix(in oklab, var(--led) 70%, var(--hw-panel)); }
+.toggle[aria-checked="true"]::after { transform: translateX(20px); background: #0b0c0d; }
+.seg-ctl { display: inline-flex; padding: 3px; gap: 3px; border-radius: 12px; background: var(--hw-bg); border: 1px solid var(--hw-line); }
+.seg-ctl button { min-height: 32px; padding: 0 12px; border-radius: 9px; font-size: 13px; color: var(--hw-ink-2); }
+.seg-ctl button[aria-pressed="true"] { background: var(--hw-raised); color: var(--hw-ink); box-shadow: inset 0 0 0 1px #34393e; }
+.swatch { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: var(--hw-bg); border: 1px solid var(--hw-line); }
+.swatch span { width: 16px; height: 16px; border-radius: 5px; }
+.swatch[aria-pressed="true"] { border-color: var(--hw-ink-2); }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 8px 16px; }
+.row + .row { border-top: 1px solid var(--hw-line); }
+.sheet-scrim { position: absolute; inset: 0; background: rgb(0 0 0 / .62); z-index: 10; }
+.sheet {
+  position: absolute; inset: auto 0 0; z-index: 11; background: var(--hw-panel); border-radius: 30px 30px 0 0;
+  border-top: 1px solid #2f3337; padding: 10px 20px 34px; max-height: 88%; overflow-y: auto; scrollbar-width: none;
+}
+.sheet .grabber { width: 40px; height: 5px; border-radius: 3px; background: #3a3f44; margin: 0 auto 14px; }
+.field { width: 100%; height: 50px; border-radius: 14px; background: var(--hw-bg); border: 1px solid var(--hw-line); padding: 0 14px; color: var(--hw-ink); }
+.stepper { display: inline-flex; align-items: center; gap: 10px; }
+.stepper button { width: 40px; height: 40px; border-radius: 12px; background: var(--hw-raised); display: grid; place-items: center; color: var(--hw-ink); }
+
+/* ---------- canvas ---------- */
+.ctl-bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 25; background: var(--canvas-bar); border-bottom: 1px solid var(--canvas-line); }
+.ctl-bar .inner { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding-block: 10px; max-width: 1760px; margin: 0 auto; }
+.ctl-group { display: flex; align-items: center; gap: 8px; }
+.ctl-btn { min-width: 40px; height: 40px; border-radius: 11px; border: 1px solid var(--canvas-line); background: var(--canvas-card); display: grid; place-items: center; padding: 0 10px; font-size: 13px; color: var(--canvas-ink); }
+.ctl-btn[aria-pressed="true"] { border-color: var(--canvas-ink); }
+.ctl-swatch { width: 40px; height: 40px; border-radius: 11px; border: 1px solid var(--canvas-line); background: #0b0c0d; display: grid; place-items: center; }
+.ctl-swatch span { width: 16px; height: 16px; border-radius: 5px; }
+.ctl-swatch[aria-pressed="true"] { border-color: var(--canvas-ink); box-shadow: inset 0 0 0 1px var(--canvas-ink); }
+.style-pill { height: 40px; padding: 0 6px; display: flex; align-items: center; gap: 8px; border-radius: 12px; background: #0b0c0d; color: #ebe9e4; min-width: 0; }
+.style-pill .name { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 200px; min-width: 0; flex: 0 1 auto; }
+.style-pill button { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: #a9aaa4; }
+.style-pill button:hover { background: #1c1f22; color: #ebe9e4; }
+.frames { display: flex; flex-wrap: wrap; gap: 48px 40px; align-items: flex-start; }
+.frame { display: flex; flex-direction: column; gap: 14px; width: calc(410px * var(--phone-zoom, 1)); max-width: 100%; }
+.frame-cap { display: flex; gap: 12px; align-items: flex-start; min-height: 64px; }
+.frame-cap .num { background: #0b0c0d; border-radius: 9px; padding: 7px 8px; flex: none; line-height: 0; }
+.frame-cap h3 { font-size: 16px; font-weight: 600; line-height: 1.3; }
+.frame-cap p { font-size: 13.5px; color: var(--canvas-ink-2); line-height: 1.45; text-wrap: pretty; }
+.section-head { display: grid; gap: 6px; max-width: 62ch; }
+.section-head h2 { font-size: 22px; font-weight: 600; letter-spacing: -.01em; text-wrap: balance; }
+.section-head p { color: var(--canvas-ink-2); }
+a { color: inherit; text-underline-offset: 3px; }
+
+.lab-row { display: grid; grid-template-columns: minmax(150px, 220px) 1fr; gap: 8px 20px; align-items: center; padding: 10px 0; border-top: 1px solid var(--canvas-line); }
+.lab-digits { background: #0b0c0d; border-radius: 12px; padding: 10px 14px; overflow-x: auto; min-width: 0; }
+@media (max-width: 560px) {
+  .lab-row { grid-template-columns: 1fr; }
+}
+/* On a phone the bar keeps only the style and colour pickers; the rest lives in screen 11. */
+@media (max-width: 640px) {
+  .ctl-bar .wordmark, .ctl-bar .ctl-extra { display: none; }
+  .ctl-bar .inner { gap: 8px; }
+  .ctl-swatch { width: 34px; height: 34px; }
+  .style-pill .name { width: auto; flex: 1 1 auto; }
+  .style-pill { flex: 1 1 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+<style type="text/tailwindcss">
+@theme inline {
+  --color-hw-bg: var(--hw-bg);
+  --color-hw-panel: var(--hw-panel);
+  --color-hw-raised: var(--hw-raised);
+  --color-hw-line: var(--hw-line);
+  --color-hw-ink: var(--hw-ink);
+  --color-hw-ink-2: var(--hw-ink-2);
+  --color-hw-ink-3: var(--hw-ink-3);
+  --color-led: var(--led);
+  --color-canvas-ink-2: var(--canvas-ink-2);
+  --font-mono: var(--font-mono);
+  --font-sans: var(--font-ui);
+}
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<script src="glyphs.js"></script>
+
+<div id="root"></div>
+
+<script>
+const { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } = React;
+const html = htm.bind(React.createElement);
+
+/* ================= glyphs + settings ================= */
+
+const GLYPHS = window.GLYPHS;
+const BY_ID = Object.fromEntries(GLYPHS.map((g) => [g.id, g]));
+const FAMILIES = [];
+for (const g of GLYPHS) {
+  let fam = FAMILIES.find((f) => f.name === g.family);
+  if (!fam) FAMILIES.push((fam = { name: g.family, glyphs: [] }));
+  fam.glyphs.push(g);
+}
+const glyphName = (g) => (g.family.length && FAMILIES.find((f) => f.name === g.family).glyphs.length > 1 ? `${g.family} · ${g.variant}` : g.family);
+
+const LEDS = [
+  { id: 'amber', name: 'Amber', hex: '#ffb000' },
+  { id: 'red', name: 'Red', hex: '#ff4b33' },
+  { id: 'green', name: 'Green', hex: '#4dff8f' },
+  { id: 'cyan', name: 'Cyan', hex: '#3fd9ff' },
+  { id: 'ice', name: 'Ice', hex: '#e2efff' },
+];
+const GHOSTS = { off: '0%', low: '8%', high: '16%' };
+const DEFAULTS = { styleId: 'sports-1', led: 'amber', ghost: 'low', glow: true, weekStart: 6, defaultLen: 25 };
+
+function loadSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('detonato.mockup') || '{}');
+    const merged = { ...DEFAULTS, ...saved };
+    if (!BY_ID[merged.styleId]) merged.styleId = DEFAULTS.styleId;
+    return merged;
+  } catch {
+    return { ...DEFAULTS };
+  }
+}
+
+const SettingsCtx = createContext(null);
+const useSettings = () => useContext(SettingsCtx);
+
+/* ================= dates + mock data ================= */
+
+const DAY = 864e5;
+const NOW = new Date();
+const TODAY = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const dayKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const W = TODAY.getDay();
+const wd = (n) => (W + n + 7) % 7;
+const EVERY = [0, 1, 2, 3, 4, 5, 6];
+const DAY_SHORT = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+const DAY_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const longDate = (d) => `${d.getDate()} ${['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][d.getMonth()]}`;
+
+// Schedules are placed relative to today's weekday so the Today screen always reads the same.
+const TASKS = [
+  { id: 'deep', name: 'Deep work', days: EVERY, sessions: 3, len: 50, since: 290 },
+  { id: 'arabic', name: 'Arabic reading', days: [wd(0), wd(2), wd(4)], sessions: 2, len: null, since: 400 },
+  { id: 'read', name: 'Read a book', days: EVERY, sessions: 1, len: null, since: 330 },
+  { id: 'guitar', name: 'Guitar practice', days: EVERY, sessions: 1, len: 30, since: 210 },
+  { id: 'inbox', name: 'Inbox zero', days: EVERY, sessions: 1, len: 15, since: 150 },
+  { id: 'leet', name: 'LeetCode', days: [wd(1), wd(3), wd(5)], sessions: 2, len: null, since: 400 },
+  { id: 'review', name: 'Weekly review', days: [wd(6)], sessions: 1, len: 45, since: 400 },
+];
+const lenOf = (t, def) => t.len ?? def;
+const scheduledOn = (d, ago) => TASKS.filter((t) => t.days.includes(d.getDay()) && (ago === undefined || ago <= t.since));
+const TODAY_TASKS = scheduledOn(TODAY);
+const NOT_TODAY = TASKS.filter((t) => !TODAY_TASKS.includes(t));
+// Done counts on the Today screen: deep work is mid-way through session 2.
+const TODAY_DONE = { deep: 1, arabic: 0, read: 0, guitar: 1, inbox: 1 };
+
+function rng(seed) {
+  let a = seed;
+  return () => {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// One record per past day: { date, tasks: [{task, done}], fraction | null }.
+function buildHistory() {
+  const rand = rng(1105);
+  const out = [];
+  for (let ago = 371; ago >= 1; ago--) {
+    const date = addDays(TODAY, -ago);
+    const tasks = scheduledOn(date, ago);
+    let p = 0.5 + 0.38 * (1 - ago / 371);
+    if (ago >= 196 && ago <= 207) p = 0.12; // a trip
+    const forced = ago <= 12 || (ago >= 120 && ago <= 150);
+    const rows = tasks.map((task) => {
+      let done = 0;
+      while (done < task.sessions && (forced || rand() < p)) done++;
+      return { task, done };
+    });
+    const total = rows.reduce((s, r) => s + r.task.sessions, 0);
+    const done = rows.reduce((s, r) => s + r.done, 0);
+    out.push({ date, key: dayKey(date), rows, fraction: total ? done / total : null, total, done });
+  }
+  const todayRows = TODAY_TASKS.map((task) => ({ task, done: TODAY_DONE[task.id] ?? 0 }));
+  const total = todayRows.reduce((s, r) => s + r.task.sessions, 0);
+  const done = todayRows.reduce((s, r) => s + r.done, 0);
+  out.push({ date: TODAY, key: dayKey(TODAY), rows: todayRows, fraction: done / total, total, done, today: true });
+  return out;
+}
+const HISTORY = buildHistory();
+const HISTORY_BY_KEY = Object.fromEntries(HISTORY.map((h) => [h.key, h]));
+
+function stats(defLen) {
+  let run = 0, best = 0, perfect = 0, minutes = 0;
+  for (const h of HISTORY) {
+    for (const r of h.rows) minutes += r.done * lenOf(r.task, defLen);
+    if (h.today || h.fraction === null) continue;
+    if (h.fraction === 1) { run++; perfect++; best = Math.max(best, run); } else run = 0;
+  }
+  return { current: run, best, perfect, hours: Math.round(minutes / 60) };
+}
+
+const levelOf = (f) => {
+  if (f === null) return 'rest';
+  if (f === 0) return 'l0';
+  if (f < 1 / 3) return 'l1';
+  if (f < 2 / 3) return 'l2';
+  if (f < 1) return 'l3';
+  return 'l4';
+};
+
+// Weeks as columns, each column ordered from the chosen week start.
+function weekColumns(weeks, weekStart) {
+  const back = (TODAY.getDay() - weekStart + 7) % 7;
+  const first = addDays(TODAY, -back - (weeks - 1) * 7);
+  const cols = [];
+  for (let w = 0; w < weeks; w++) {
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const date = addDays(first, w * 7 + i);
+      const h = HISTORY_BY_KEY[dayKey(date)];
+      days.push({ date, h, future: date > TODAY });
+    }
+    cols.push(days);
+  }
+  return cols;
+}
+
+/* ================= icons ================= */
+
+const ICONS = {
+  chevL: 'M15 18l-6-6 6-6', chevR: 'M9 6l6 6-6 6', chevD: 'M6 9l6 6 6-6',
+  plus: 'M12 5v14M5 12h14', minus: 'M5 12h14', check: 'M5 12.5l4.5 4.5L19 7.5', x: 'M6 6l12 12M18 6L6 18',
+  list: 'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01',
+  reset: 'M4 12a8 8 0 1 0 2.4-5.7M4 4.5V8h3.5',
+  trash: 'M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12',
+  down: 'M12 4v11M7 10l5 5 5-5M5 20h14', up: 'M12 20V9M7 14l5-5 5 5M5 4h14',
+  bell: 'M6.5 16.5V11a5.5 5.5 0 1 1 11 0v5.5l1.5 1.5h-14zM10 20.5a2 2 0 0 0 4 0',
+  sun: 'M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4',
+};
+function Icon({ name, size = 22, sw = 1.8 }) {
+  const fill = { play: 'M8 5.5v13l11-6.5z', pause: 'M7.5 5h3.5v14H7.5zM13 5h3.5v14H13z', stop: 'M6.5 6.5h11v11h-11z' }[name];
+  if (fill) return html`<svg width=${size} height=${size} viewBox="0 0 24 24" aria-hidden="true"><path d=${fill} fill="currentColor" /></svg>`;
+  if (name === 'grid') {
+    const cells = [];
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) cells.push(html`<rect key=${r * 4 + c} x=${2.5 + c * 5} y=${5 + r * 5} width="3.6" height="3.6" rx="1" fill="currentColor" opacity=${(r * 4 + c) % 3 === 1 ? 0.45 : 1} />`);
+    return html`<svg width=${size} height=${size} viewBox="0 0 24 24" aria-hidden="true">${cells}</svg>`;
+  }
+  if (name === 'sliders') {
+    return html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth=${sw} strokeLinecap="round" aria-hidden="true">
+      <path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="12" r="2" /><circle cx="17" cy="17" r="2" /></svg>`;
+  }
+  return html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth=${sw} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    ${name === 'sun' && html`<circle cx="12" cy="12" r="4" />`}<path d=${ICONS[name]} /></svg>`;
+}
+
+/* ================= segment display ================= */
+
+const ALL = (g) => g.segments.map((_, i) => i);
+
+// One digit = two stacked SVGs: every segment in ghost colour, then the same segments
+// in LED colour with each one switched on or off on its own (data-seg = sheet order).
+function Digit({ glyph, value, index = 0 }) {
+  const [x, y, w, h] = glyph.box;
+  let lit;
+  if (value === null || value === undefined) lit = [];
+  else if (!glyph.digits) lit = ALL(glyph);
+  else lit = glyph.digits[value];
+  const on = new Set(lit);
+  const vb = `${x} ${y} ${w} ${h}`;
+  return html`<span className="seg-digit" style=${{ width: `${w / h}em`, '--d': index }}>
+    <svg className="ghost" viewBox=${vb} aria-hidden="true">
+      ${glyph.segments.map((m, i) => html`<g key=${i} dangerouslySetInnerHTML=${{ __html: m }} />`)}
+    </svg>
+    <svg className="lit" viewBox=${vb} aria-hidden="true">
+      ${glyph.segments.map((m, i) => html`<g key=${i} data-seg=${i} className=${on.has(i) ? 'on' : ''} style=${{ '--i': i }} dangerouslySetInnerHTML=${{ __html: m }} />`)}
+    </svg>
+  </span>`;
+}
+
+function Mark({ kind, dim }) {
+  // Colon, slash and point drawn on a 240-unit-tall frame to match the glyphs.
+  const shapes = {
+    ':': { w: 40, body: html`<rect x="6" y="64" width="28" height="28" rx="6" /><rect x="6" y="148" width="28" height="28" rx="6" />` },
+    '/': { w: 70, body: html`<polygon points="50,20 66,20 20,220 4,220" />` },
+    '.': { w: 36, body: html`<rect x="4" y="200" width="28" height="28" rx="6" />` },
+  }[kind];
+  return html`<span className=${'seg-mark' + (dim ? ' dim' : '')} style=${{ width: `${shapes.w / 240}em` }}>
+    <svg className="ghost" viewBox=${`0 0 ${shapes.w} 240`} aria-hidden="true">${shapes.body}</svg>
+    <svg className="lit" viewBox=${`0 0 ${shapes.w} 240`} aria-hidden="true">${shapes.body}</svg>
+  </span>`;
+}
+
+// text: digits, ':' '/' '.', and ' ' for a dark digit slot.
+function Display({ text, size, glyphId, className = '', sweepKey, label, dimMarks }) {
+  const { styleId } = useSettings();
+  const glyph = BY_ID[glyphId || styleId];
+  const [phase, setPhase] = useState('idle');
+  useLayoutEffect(() => {
+    if (sweepKey === undefined) return;
+    setPhase('blank');
+    let t;
+    const r = requestAnimationFrame(() => requestAnimationFrame(() => {
+      setPhase('sweep');
+      t = setTimeout(() => setPhase('idle'), 1400);
+    }));
+    return () => { cancelAnimationFrame(r); clearTimeout(t); };
+  }, [sweepKey]);
+  let d = 0;
+  const parts = [...text].map((ch, i) => {
+    if (/\d| /.test(ch)) return html`<${Digit} key=${i} glyph=${glyph} value=${ch === ' ' ? null : Number(ch)} index=${d++} />`;
+    return html`<${Mark} key=${i} kind=${ch} dim=${dimMarks} />`;
+  });
+  const cls = ['seg-display', className, phase !== 'idle' ? phase : ''].join(' ');
+  return html`<span className=${cls} style=${{ fontSize: size }} role="img" aria-label=${label || text}>${parts}</span>`;
+}
+
+const mmss = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+
+/* ================= phone chrome ================= */
+
+function Phone({ children, time = '13:42', light }) {
+  return html`<div className="phone-slot"><div className="phone">
+    <div className="status" style=${light ? { color: '#ebe9e4' } : null}>
+      <span className="mono" style=${{ fontSize: '15px', fontWeight: 600 }}>${time}</span>
+      <span style=${{ display: 'flex', gap: '6px', alignItems: 'center' }} aria-hidden="true">
+        <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor" /><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="currentColor" /><rect x="10" y="3" width="3" height="9" rx="1" fill="currentColor" /><rect x="15" y="0" width="3" height="12" rx="1" fill="currentColor" /></svg>
+        <svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.5" fill="none" stroke="currentColor" opacity=".45" /><rect x="2.5" y="2.5" width="15" height="8" rx="2" fill="currentColor" /><rect x="25" y="4.5" width="1.6" height="4" rx=".8" fill="currentColor" opacity=".45" /></svg>
+      </span>
+    </div>
+    <div className="island" />
+    <div className="screen">${children}</div>
+    <div className="home" />
+  </div></div>`;
+}
+
+function TopBar({ title, back = true, right }) {
+  return html`<div className="flex items-center justify-between px-3 h-[52px] shrink-0">
+    <div className="flex items-center gap-1 min-w-0">
+      ${back && html`<button className="icon-btn" aria-label="Back"><${Icon} name="chevL" /></button>`}
+      <span className="hw-label truncate" style=${{ color: 'var(--hw-ink-2)' }}>${title}</span>
+    </div>
+    <div className="flex items-center">${right}</div>
+  </div>`;
+}
+
+function Pips({ total, done, live }) {
+  const out = [];
+  for (let i = 0; i < total; i++) {
+    let cls = 'pip';
+    if (i < done) cls += ' on';
+    else if (live && i === done) cls += ' live';
+    out.push(html`<span key=${i} className=${cls} />`);
+  }
+  return html`<span className="inline-flex gap-[5px] items-center">${out}</span>`;
+}
+
+function MiniHeat({ weeks = 12, cleared }) {
+  const { weekStart } = useSettings();
+  const cols = weekColumns(weeks, weekStart);
+  return html`<div className="flex gap-[3px]" role="img" aria-label=${`Last ${weeks} weeks of completion`}>
+    ${cols.map((col, c) => html`<div key=${c} className="flex flex-col gap-[3px]">
+      ${col.map(({ date, h, future }, r) => {
+        let cls = 'cell ';
+        if (future || !h) cls += 'future';
+        else if (h.today) cls += (cleared ? 'l4' : levelOf(h.fraction)) + ' today';
+        else cls += levelOf(h.fraction);
+        return html`<span key=${r} className=${cls} style=${{ width: '9px', height: '9px', borderRadius: '2px' }} />`;
+      })}
+    </div>`)}
+  </div>`;
+}
+
+/* ================= live timer ================= */
+
+const TimerCtx = createContext(null);
+function TimerProvider({ children }) {
+  const [state, setState] = useState({ left: 24 * 60 + 18, running: true, sweep: 0 });
+  useEffect(() => {
+    if (!state.running) return;
+    const id = setInterval(() => setState((s) => (s.left > 0 ? { ...s, left: s.left - 1 } : { ...s, running: false })), 1000);
+    return () => clearInterval(id);
+  }, [state.running]);
+  const api = useMemo(() => ({
+    ...state,
+    toggle: () => setState((s) => ({ ...s, running: !s.running, sweep: s.running ? s.sweep : s.sweep + 1 })),
+    reset: () => setState((s) => ({ ...s, left: 50 * 60, running: false })),
+  }), [state]);
+  return html`<${TimerCtx.Provider} value=${api}>${children}<//>`;
+}
+
+/* ================= screens ================= */
+
+function TaskCard({ task, done, running }) {
+  const { defaultLen } = useSettings();
+  const timer = useContext(TimerCtx);
+  const complete = done >= task.sessions;
+  const len = lenOf(task, defaultLen);
+  let action;
+  if (complete) action = html`<span className="w-11 h-11 grid place-items-center text-led" aria-label="Done"><${Icon} name="check" sw=${2.4} /></span>`;
+  else if (running) action = html`<span className="flex flex-col items-end gap-1"><${Display} text=${mmss(timer.left)} size="22px" /><span className="hw-label" style=${{ fontSize: '10px' }}>Running</span></span>`;
+  else action = html`<button className="w-11 h-11 rounded-full grid place-items-center bg-hw-raised text-hw-ink" aria-label=${`Start ${task.name}`}><${Icon} name="play" size=${18} /></button>`;
+  return html`<div className=${'hw-card flex items-center gap-3 pl-4 pr-3 py-3' + (complete ? ' opacity-60' : '')} style=${running ? { borderColor: 'color-mix(in oklab, var(--led) 45%, var(--hw-line))' } : null}>
+    <div className="flex-1 min-w-0 grid gap-[6px]">
+      <span className=${'font-medium truncate' + (complete ? ' line-through decoration-hw-ink-3' : '')}>${task.name}</span>
+      <span className="flex items-center gap-3">
+        <${Pips} total=${task.sessions} done=${done} live=${running} />
+        <span className="mono text-[12px] text-hw-ink-3">${task.sessions} × ${len} min</span>
+      </span>
+    </div>
+    ${action}
+  </div>`;
+}
+
+function TodayScreen({ cleared }) {
+  const { defaultLen } = useSettings();
+  const rows = TODAY_TASKS.map((t) => ({ task: t, done: cleared ? t.sessions : TODAY_DONE[t.id] ?? 0 }));
+  const total = rows.reduce((s, r) => s + r.task.sessions, 0);
+  const done = rows.reduce((s, r) => s + r.done, 0);
+  const open = rows.filter((r) => r.done < r.task.sessions).sort((a, b) => (b.task.id === 'deep') - (a.task.id === 'deep'));
+  const finished = rows.filter((r) => r.done >= r.task.sessions);
+  const minutes = rows.reduce((s, r) => s + r.done * lenOf(r.task, defaultLen), 0);
+  const st = stats(defaultLen);
+  return html`<div className="flex items-start justify-between px-5 pt-2 pb-3 shrink-0">
+      <div className="grid">
+        <span className="hw-label">${DAY_LONG[TODAY.getDay()]}</span>
+        <span className="text-[26px] font-semibold tracking-tight leading-tight">${longDate(TODAY)}</span>
+      </div>
+      <div className="flex -mr-2">
+        <button className="icon-btn" aria-label="History"><${Icon} name="grid" /></button>
+        <button className="icon-btn" aria-label="All tasks"><${Icon} name="list" /></button>
+        <button className="icon-btn" aria-label="Settings"><${Icon} name="sliders" /></button>
+      </div>
+    </div>
+    <div className="scroll px-4 grid content-start gap-3">
+      <div className="hw-card p-4 grid gap-4">
+        <div className="flex items-end justify-between gap-3">
+          <div className="grid gap-2">
+            <span className="hw-label">${cleared ? 'Day cleared' : 'Sessions today'}</span>
+            <${Display} text=${`${String(done).padStart(2, '0')}/${String(total).padStart(2, '0')}`} size="46px" dimMarks=${true} sweepKey=${cleared ? 1 : undefined} />
+          </div>
+          <button aria-label="Open history" className="rounded-md"><${MiniHeat} weeks=${10} cleared=${cleared} /></button>
+        </div>
+        <div className="flex gap-[4px]" aria-hidden="true">
+          ${Array.from({ length: total }, (_, i) => html`<span key=${i} className=${'pip flex-1 h-[6px]' + (i < done ? ' on' : '')} style=${{ width: 'auto', height: '6px' }} />`)}
+        </div>
+        ${cleared && html`<div className="flex items-center justify-between text-[13.5px] text-hw-ink-2">
+          <span>${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, '0')} min of focus</span>
+          <span className="flex items-center gap-2"><span className="hw-label">Streak</span><${Display} text=${String(st.current + 1)} size="20px" /></span>
+        </div>`}
+      </div>
+
+      ${!cleared && html`<div className="grid gap-2">
+        <span className="hw-label px-1 pt-2">To do · ${open.length}</span>
+        ${open.map((r) => html`<${TaskCard} key=${r.task.id} task=${r.task} done=${r.done} running=${r.task.id === 'deep'} />`)}
+      </div>`}
+      <div className="grid gap-2">
+        <span className="hw-label px-1 pt-2">Done · ${finished.length}</span>
+        ${finished.map((r) => html`<${TaskCard} key=${r.task.id} task=${r.task} done=${r.done} />`)}
+      </div>
+      <button className="hw-card flex items-center justify-between px-4 h-[52px] text-hw-ink-2">
+        <span>Not today · ${NOT_TODAY.length}</span><${Icon} name="chevD" />
+      </button>
+    </div>`;
+}
+
+function TimerScreen({ mode }) {
+  const live = useContext(TimerCtx);
+  const isLive = mode === 'live';
+  const left = isLive ? live.left : mode === 'paused' ? 17 * 60 + 42 : 0;
+  const running = isLive ? live.running : false;
+  const fuse = Math.ceil(left / 60);
+  let cls = '';
+  if (mode === 'done') cls = 'flash';
+  else if (!running) cls = 'blink';
+  const ends = mode === 'done' ? 'Ended 14:07' : running ? 'Ends 14:07' : 'Paused';
+  return html`<${TopBar} title="Deep work" right=${html`<span className="flex items-center gap-1 pr-2 text-hw-ink-3" title="Screen stays on"><${Icon} name="sun" size=${18} /><span className="hw-label" style=${{ fontSize: '10.5px' }}>Awake</span></span>`} />
+    <div className="flex-1 flex flex-col px-5 pb-10">
+      <div className="flex-1 flex flex-col justify-center gap-4 pb-6">
+      <div className="flex items-center justify-between">
+        <span className="hw-label">Session 2 of 3</span>
+        <${Pips} total=${3} done=${mode === 'done' ? 2 : 1} live=${mode !== 'done'} />
+      </div>
+      <div className="hw-window px-4 pt-9 pb-6 grid gap-6 justify-items-center">
+        <${Display} text=${mmss(left)} size="104px" className=${cls} sweepKey=${isLive ? live.sweep : undefined} />
+        <div className="w-full grid gap-2">
+          <div className="flex gap-[3px]" aria-hidden="true">
+            ${Array.from({ length: 50 }, (_, i) => html`<span key=${i} className="flex-1 h-[10px] rounded-[2px]" style=${{ background: i < fuse ? 'var(--led)' : 'var(--lvl-0)', opacity: i < fuse ? 0.85 : 1 }} />`)}
+          </div>
+          <div className="flex justify-between mono text-[11.5px] text-hw-ink-3"><span>50 min</span><span>${ends}</span></div>
+        </div>
+      </div>
+      ${mode !== 'done' && html`<p className="text-center text-[13px] text-hw-ink-3">Today: 3 of 8 sessions done</p>`}
+      </div>
+      ${mode === 'done'
+        ? html`<div className="grid gap-3">
+            <p className="text-center text-[20px] font-semibold">Session 2 of 3 done</p>
+            <p className="text-center text-hw-ink-2 -mt-2 mb-3">50 minutes logged. One session left today.</p>
+            <button className="btn-led">Start session 3</button>
+            <button className="btn-quiet">Back to Today</button>
+          </div>`
+        : html`<div className="grid grid-cols-3 items-center justify-items-center">
+            <button className="grid justify-items-center gap-1 text-hw-ink-2" onClick=${isLive ? live.reset : undefined}>
+              <span className="w-14 h-14 rounded-full grid place-items-center bg-hw-raised"><${Icon} name="reset" /></span><span className="text-[12.5px]">Reset</span>
+            </button>
+            <button className="w-[84px] h-[84px] rounded-full grid place-items-center text-[#0b0c0d]" style=${{ background: 'var(--led)', boxShadow: '0 0 34px -8px var(--led-glow)' }}
+              aria-label=${running ? 'Pause' : 'Resume'} onClick=${isLive ? live.toggle : undefined}>
+              <${Icon} name=${running ? 'pause' : 'play'} size=${34} />
+            </button>
+            <button className="grid justify-items-center gap-1 text-hw-ink-2">
+              <span className="w-14 h-14 rounded-full grid place-items-center bg-hw-raised"><${Icon} name="stop" /></span><span className="text-[12.5px]">Stop</span>
+            </button>
+          </div>`}
+      ${mode !== 'done' && html`<p className="text-center text-[13px] text-hw-ink-3 mt-6">Next: Arabic reading · 2 × 25 min</p>`}
+    </div>`;
+}
+
+function LockScreen() {
+  return html`<div className="absolute inset-0" style=${{ background: 'radial-gradient(120% 70% at 50% 0%, #1d2226 0%, #0b0c0d 60%)' }} />
+    <div className="relative flex-1 flex flex-col items-center pt-10 px-3">
+      <span className="text-[17px] font-medium text-hw-ink-2">${DAY_LONG[TODAY.getDay()]} ${longDate(TODAY)}</span>
+      <span className="text-[92px] font-semibold leading-none tracking-tight mt-1" style=${{ fontFamily: 'var(--font-ui)' }}>14:07</span>
+      <div className="mt-auto mb-28 w-full rounded-[22px] p-3 pr-4 flex gap-3" style=${{ background: 'rgb(38 42 46 / .92)' }}>
+        <span className="w-[38px] h-[38px] rounded-[10px] bg-hw-bg grid place-items-center shrink-0" style=${{ boxShadow: 'inset 0 0 0 1px #2c3034' }}>
+          <${Display} text="8" size="24px" />
+        </span>
+        <div className="grid min-w-0 flex-1">
+          <span className="flex justify-between text-[13px] text-hw-ink-2"><span className="font-semibold uppercase tracking-wide text-[12px]">Detonato</span><span>now</span></span>
+          <span className="font-semibold text-[15px]">Deep work · session 2 of 3 done</span>
+          <span className="text-[14px] text-hw-ink-2">50 minutes logged. Open to start session 3.</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function WeekChips({ days, interactive, onToggle }) {
+  const { weekStart } = useSettings();
+  const order = Array.from({ length: 7 }, (_, i) => (weekStart + i) % 7);
+  return html`<div className="flex gap-[5px]">
+    ${order.map((d) => interactive
+      ? html`<button key=${d} className=${'chip flex-1' + (days.includes(d) ? ' on' : '')} aria-pressed=${days.includes(d)} onClick=${() => onToggle(d)}>${DAY_SHORT[d]}</button>`
+      : html`<span key=${d} className=${'chip' + (days.includes(d) ? ' on' : '')} style=${{ minWidth: '0', width: '38px', height: '24px', fontSize: '11px', borderRadius: '7px' }}>${DAY_SHORT[d]}</span>`)}
+  </div>`;
+}
+
+function TasksScreen({ editing }) {
+  const { defaultLen } = useSettings();
+  return html`<${TopBar} title="Tasks" right=${html`<button className="icon-btn" aria-label="New task"><${Icon} name="plus" /></button>`} />
+    <div className="scroll px-4 grid content-start gap-2">
+      ${TASKS.map((t) => html`<button key=${t.id} className="hw-card grid gap-3 p-4 text-left">
+        <span className="flex items-baseline justify-between gap-3">
+          <span className="font-medium">${t.name}</span>
+          <span className="mono text-[12px] text-hw-ink-3 shrink-0">${t.sessions} × ${lenOf(t, defaultLen)} min${t.len === null ? ' · default' : ''}</span>
+        </span>
+        <${WeekChips} days=${t.days} />
+      </button>`)}
+    </div>
+    ${editing && html`<${EditorSheet} />`}`;
+}
+
+function EditorSheet() {
+  const { defaultLen } = useSettings();
+  const [days, setDays] = useState(TASKS[1].days);
+  const [every, setEvery] = useState(false);
+  const [sessions, setSessions] = useState(2);
+  const [custom, setCustom] = useState(true);
+  const [len, setLen] = useState(40);
+  const toggle = (d) => setDays((ds) => (ds.includes(d) ? ds.filter((x) => x !== d) : [...ds, d]));
+  return html`<div className="sheet-scrim" />
+    <div className="sheet grid gap-5" role="dialog" aria-label="Edit task">
+      <div>
+        <div className="grabber" />
+        <div className="flex items-center justify-between">
+          <span className="text-[18px] font-semibold">Edit task</span>
+          <button className="icon-btn -mr-2" aria-label="Close"><${Icon} name="x" /></button>
+        </div>
+      </div>
+      <label className="grid gap-2"><span className="hw-label">Name</span>
+        <input id="task-name" className="field" defaultValue="Arabic reading" />
+      </label>
+      <div className="grid gap-3">
+        <span className="hw-label">Repeats</span>
+        <div className="seg-ctl w-full">
+          <button className="flex-1" aria-pressed=${every} onClick=${() => setEvery(true)}>Every day</button>
+          <button className="flex-1" aria-pressed=${!every} onClick=${() => setEvery(false)}>Pick days</button>
+        </div>
+        ${!every && html`<${WeekChips} days=${days} interactive=${true} onToggle=${toggle} />`}
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="grid"><span className="hw-label">Sessions</span><span className="text-[13px] text-hw-ink-3">Pomodoros to finish it</span></span>
+        <span className="stepper">
+          <button aria-label="Fewer sessions" onClick=${() => setSessions((n) => Math.max(1, n - 1))}><${Icon} name="minus" size=${18} /></button>
+          <${Display} text=${String(sessions)} size="34px" />
+          <button aria-label="More sessions" onClick=${() => setSessions((n) => Math.min(8, n + 1))}><${Icon} name="plus" size=${18} /></button>
+        </span>
+      </div>
+      <div className="grid gap-3">
+        <div className="flex items-center justify-between">
+          <span className="grid"><span className="hw-label">Session length</span><span className="text-[13px] text-hw-ink-3">${custom ? 'Custom for this task' : `Uses the default, ${defaultLen} min`}</span></span>
+          <button className="toggle" role="switch" aria-checked=${custom} aria-label="Custom length" onClick=${() => setCustom((c) => !c)} />
+        </div>
+        ${custom && html`<div className="hw-window flex items-center justify-between px-3 py-3">
+          <button className="w-11 h-11 rounded-xl bg-hw-raised grid place-items-center" aria-label="Shorter" onClick=${() => setLen((n) => Math.max(5, n - 5))}><${Icon} name="minus" size=${18} /></button>
+          <span className="flex items-end gap-2"><${Display} text=${String(len).padStart(2, '0')} size="48px" /><span className="hw-label pb-1">min</span></span>
+          <button className="w-11 h-11 rounded-xl bg-hw-raised grid place-items-center" aria-label="Longer" onClick=${() => setLen((n) => Math.min(95, n + 5))}><${Icon} name="plus" size=${18} /></button>
+        </div>`}
+      </div>
+      <div className="flex gap-3 pt-1">
+        <button className="btn-quiet flex items-center gap-2" style=${{ color: '#ff8f7d' }}><${Icon} name="trash" size=${18} />Delete</button>
+        <button className="btn-led flex-1">Save</button>
+      </div>
+    </div>`;
+}
+
+function HistoryScreen({ openDay }) {
+  const { weekStart, defaultLen } = useSettings();
+  const [sel, setSel] = useState(openDay || null);
+  const scroller = useRef(null);
+  // Start at today. Tailwind's browser build styles the page a beat after mount, so wait
+  // for the strip to actually overflow before scrolling.
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => { if (el.scrollWidth > el.clientWidth && el.scrollLeft === 0) el.scrollLeft = el.scrollWidth; });
+    ro.observe(el);
+    ro.observe(el.firstChild);
+    return () => ro.disconnect();
+  }, []);
+  const cols = weekColumns(53, weekStart);
+  const st = stats(defaultLen);
+  const order = Array.from({ length: 7 }, (_, i) => (weekStart + i) % 7);
+  const months = cols.map((col, i) => {
+    const m = col[0].date.getMonth();
+    return i === 0 || m !== cols[i - 1][0].date.getMonth() ? MONTHS[m] : '';
+  });
+  const tiles = [['Current streak', st.current, 'days'], ['Best streak', st.best, 'days'], ['Perfect days', st.perfect, 'in 12 months'], ['Focus', st.hours, 'hours']];
+  const picked = sel && HISTORY_BY_KEY[sel];
+  return html`<${TopBar} title="History" />
+    <div className="scroll px-4 grid content-start gap-3">
+      <div className="grid grid-cols-2 gap-2">
+        ${tiles.map(([label, n, unit]) => html`<div key=${label} className="hw-card p-4 grid gap-3">
+          <span className="hw-label">${label}</span>
+          <span className="flex items-end gap-2"><${Display} text=${String(n)} size="34px" /><span className="text-[12.5px] text-hw-ink-3 pb-[2px]">${unit}</span></span>
+        </div>`)}
+      </div>
+      <div className="hw-card p-4 grid gap-3">
+        <div className="flex justify-between items-baseline"><span className="hw-label">Last 12 months</span><span className="mono text-[11.5px] text-hw-ink-3">Tap a day</span></div>
+        <div className="flex gap-2">
+          <div className="grid gap-[3px] pt-[19px] shrink-0">
+            ${order.map((d, i) => html`<span key=${d} className="mono text-[10.5px] leading-[13px] h-[13px] text-hw-ink-3">${i % 2 === 1 ? DAY_SHORT[d] : ''}</span>`)}
+          </div>
+          <div ref=${scroller} style=${{ overflowX: 'auto', minWidth: 0, flex: '1 1 0%', scrollbarWidth: 'none' }}>
+            <div style=${{ display: 'flex', gap: '3px', width: 'max-content' }}>
+              ${cols.map((col, c) => html`<div key=${c} className="grid gap-[3px] content-start">
+                <span className="mono text-[10.5px] leading-[16px] h-[16px] text-hw-ink-3 whitespace-nowrap w-[13px] overflow-visible">${months[c]}</span>
+                ${col.map(({ date, h, future }) => {
+                  let cls = 'cell ';
+                  if (future || !h) cls += 'future';
+                  else cls += levelOf(h.fraction) + (h.today ? ' today' : '');
+                  const k = dayKey(date);
+                  if (future || !h) return html`<span key=${k} className=${cls} style=${{ width: '13px', height: '13px' }} />`;
+                  return html`<button key=${k} className=${cls} style=${{ width: '13px', height: '13px', outline: sel === k ? '1.5px solid var(--led)' : undefined, outlineOffset: '1px' }}
+                    aria-label=${`${longDate(date)}: ${h.fraction === null ? 'nothing scheduled' : `${h.done} of ${h.total} sessions`}`} onClick=${() => setSel(k)} />`;
+                })}
+              </div>`)}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center justify-between text-[11.5px] text-hw-ink-3 mono">
+          <span className="flex items-center gap-[5px]">Less ${['l0', 'l1', 'l2', 'l3', 'l4'].map((l) => html`<span key=${l} className=${'cell ' + l} style=${{ width: '11px', height: '11px' }} />`)} More</span>
+          <span className="flex items-center gap-[5px]"><span className="cell rest" style=${{ width: '11px', height: '11px' }} />Rest day</span>
+        </div>
+      </div>
+      <div className="hw-card p-4 grid gap-3">
+        <span className="hw-label">Last 30 days by task</span>
+        ${TASKS.slice(0, 5).map((t) => {
+          let total = 0, done = 0;
+          for (const h of HISTORY.slice(-31, -1)) for (const r of h.rows) if (r.task === t) { total += r.task.sessions; done += r.done; }
+          const pct = total ? Math.round((done / total) * 100) : 0;
+          return html`<div key=${t.id} className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 items-center">
+            <span className="text-[14px] truncate">${t.name}</span><span className="mono text-[12px] text-hw-ink-2">${pct}%</span>
+            <span className="col-span-2 flex gap-[3px]">${Array.from({ length: 20 }, (_, i) => html`<span key=${i} className="flex-1 h-[6px] rounded-[1.5px]" style=${{ background: i < Math.round(pct / 5) ? 'var(--led)' : 'var(--lvl-0)' }} />`)}</span>
+          </div>`;
+        })}
+      </div>
+    </div>
+    ${picked && html`<${DaySheet} h=${picked} onClose=${() => setSel(null)} />`}`;
+}
+
+function DaySheet({ h, onClose }) {
+  const { defaultLen } = useSettings();
+  const pct = h.fraction === null ? null : Math.round(h.fraction * 100);
+  return html`<div className="sheet-scrim" onClick=${onClose} />
+    <div className="sheet grid gap-4" role="dialog" aria-label=${longDate(h.date)}>
+      <div>
+        <div className="grabber" />
+        <div className="flex items-start justify-between">
+          <div className="grid">
+            <span className="hw-label">${DAY_LONG[h.date.getDay()]}</span>
+            <span className="text-[22px] font-semibold">${longDate(h.date)}</span>
+          </div>
+          <button className="icon-btn -mr-2" aria-label="Close" onClick=${onClose}><${Icon} name="x" /></button>
+        </div>
+      </div>
+      ${pct === null
+        ? html`<p className="text-hw-ink-2">Nothing was scheduled this day.</p>`
+        : html`<div className="hw-window flex items-center justify-between px-4 py-4">
+            <${Display} text=${`${String(h.done).padStart(2, '0')}/${String(h.total).padStart(2, '0')}`} size="40px" dimMarks=${true} />
+            <span className="grid justify-items-end"><span className="hw-label">Sessions</span><span className="mono text-[20px] text-led">${pct}%</span></span>
+          </div>`}
+      <div className="grid">
+        ${h.rows.map((r) => html`<div key=${r.task.id} className="flex items-center justify-between gap-3 py-3 border-t border-hw-line">
+          <span className="grid gap-1 min-w-0"><span className="truncate">${r.task.name}</span><${Pips} total=${r.task.sessions} done=${r.done} /></span>
+          <span className="mono text-[13px] text-hw-ink-2 shrink-0">${r.done}/${r.task.sessions} · ${r.done * lenOf(r.task, defaultLen)} min</span>
+        </div>`)}
+      </div>
+    </div>`;
+}
+
+function SettingsScreen() {
+  const s = useSettings();
+  const g = BY_ID[s.styleId];
+  return html`<${TopBar} title="Settings" />
+    <div className="scroll px-4 grid content-start gap-3">
+      <span className="hw-label px-1 pt-1">Display</span>
+      <div className="hw-card">
+        <button className="row w-full text-left">
+          <span className="grid min-w-0"><span>Style</span><span className="mono text-[12px] text-hw-ink-3 truncate">${glyphName(g)} · ${g.count} segments</span></span>
+          <span className="flex items-center gap-2 shrink-0"><${Display} text="25" size="30px" /><span className="text-hw-ink-3"><${Icon} name="chevR" /></span></span>
+        </button>
+        <div className="row">
+          <span>LED colour</span>
+          <span className="flex gap-[6px]">${LEDS.map((l) => html`<button key=${l.id} className="swatch" aria-label=${l.name} aria-pressed=${s.led === l.id} onClick=${() => s.set({ led: l.id })}><span style=${{ background: l.hex }} /></button>`)}</span>
+        </div>
+        <div className="row">
+          <span className="grid"><span>Unlit segments</span><span className="text-[12.5px] text-hw-ink-3">Faint outline of every segment</span></span>
+          <span className="seg-ctl">${Object.keys(GHOSTS).map((k) => html`<button key=${k} aria-pressed=${s.ghost === k} onClick=${() => s.set({ ghost: k })}>${k[0].toUpperCase() + k.slice(1)}</button>`)}</span>
+        </div>
+        <div className="row">
+          <span>Glow</span>
+          <button className="toggle" role="switch" aria-checked=${s.glow} aria-label="Glow" onClick=${() => s.set({ glow: !s.glow })} />
+        </div>
+      </div>
+      <span className="hw-label px-1 pt-2">Timer</span>
+      <div className="hw-card">
+        <div className="row">
+          <span className="grid"><span>Default session</span><span className="text-[12.5px] text-hw-ink-3">For tasks without their own length</span></span>
+          <span className="stepper">
+            <button aria-label="Shorter default" onClick=${() => s.set({ defaultLen: Math.max(5, s.defaultLen - 5) })}><${Icon} name="minus" size=${16} /></button>
+            <${Display} text=${String(s.defaultLen).padStart(2, '0')} size="28px" />
+            <button aria-label="Longer default" onClick=${() => s.set({ defaultLen: Math.min(95, s.defaultLen + 5) })}><${Icon} name="plus" size=${16} /></button>
+          </span>
+        </div>
+        <div className="row"><span>Keep screen on while timing</span><button className="toggle" role="switch" aria-checked="true" aria-label="Keep screen on" /></div>
+      </div>
+      <span className="hw-label px-1 pt-2">Alerts</span>
+      <div className="hw-card">
+        <div className="row"><span>Notify when a session ends</span><button className="toggle" role="switch" aria-checked="true" aria-label="Notifications" /></div>
+        <div className="row"><span>Sound</span><span className="flex items-center gap-1 text-hw-ink-2">Chime <${Icon} name="chevR" size=${18} /></span></div>
+        <div className="row"><span>Haptics</span><button className="toggle" role="switch" aria-checked="true" aria-label="Haptics" /></div>
+      </div>
+      <span className="hw-label px-1 pt-2">Calendar</span>
+      <div className="hw-card">
+        <div className="row">
+          <span>Week starts on</span>
+          <span className="seg-ctl">${[[6, 'Sat'], [0, 'Sun'], [1, 'Mon']].map(([d, n]) => html`<button key=${d} aria-pressed=${s.weekStart === d} onClick=${() => s.set({ weekStart: d })}>${n}</button>`)}</span>
+        </div>
+      </div>
+      <span className="hw-label px-1 pt-2">Data</span>
+      <div className="hw-card">
+        <button className="row w-full"><span>Export backup</span><span className="text-hw-ink-3"><${Icon} name="down" size=${20} /></span></button>
+        <button className="row w-full"><span>Import backup</span><span className="text-hw-ink-3"><${Icon} name="up" size=${20} /></span></button>
+      </div>
+      <p className="text-[12.5px] text-hw-ink-3 px-1 pt-2">Segment designs by Posy (Michiel de Boer), from the Segmented Display Designs Sheet v1.1.</p>
+    </div>`;
+}
+
+function familyNote(f) {
+  const missing = f.glyphs.filter((g) => !g.digits);
+  if (missing.length === f.glyphs.length) return 'Digits not mapped yet';
+  if (missing.length) return `${missing.map((g) => g.variant).join(', ')}: digits not mapped yet`;
+  if (f.glyphs[0].how === 'six') return '0 and 8 look the same';
+  return '';
+}
+
+function StylePicker() {
+  const s = useSettings();
+  const g = BY_ID[s.styleId];
+  return html`<${TopBar} title="Display style" />
+    <div className="px-4 pb-3 shrink-0">
+      <div className="hw-window grid justify-items-center gap-3 px-3 pt-6 pb-4">
+        <${Display} text="25:00" size="78px" sweepKey=${s.styleId} />
+        <span className="mono text-[12px] text-hw-ink-2">${glyphName(g)} · ${g.count} segments</span>
+      </div>
+    </div>
+    <div className="scroll px-4 grid content-start gap-5">
+      ${FAMILIES.map((f) => html`<div key=${f.name} className="grid gap-2">
+        <span className="flex justify-between items-baseline px-1">
+          <span className="hw-label" style=${{ color: 'var(--hw-ink-2)' }}>${f.name}</span>
+          <span className="mono text-[11px] text-hw-ink-3">${familyNote(f)}</span>
+        </span>
+        <div className="grid grid-cols-4 gap-2">
+          ${f.glyphs.map((gl) => html`<button key=${gl.id} aria-pressed=${s.styleId === gl.id} aria-label=${glyphName(gl)}
+            className="hw-card grid justify-items-center gap-1 pt-3 pb-2" onClick=${() => s.set({ styleId: gl.id })}
+            style=${s.styleId === gl.id ? { borderColor: 'var(--led)', boxShadow: '0 0 0 1px var(--led)' } : null}>
+            <${Display} text="8" size="44px" glyphId=${gl.id} />
+            <span className="mono text-[10.5px] text-hw-ink-3">${f.glyphs.length > 1 ? gl.variant : `${gl.count} seg`}</span>
+          </button>`)}
+        </div>
+      </div>`)}
+    </div>`;
+}
+
+/* ================= canvas ================= */
+
+const FLOWS = [
+  {
+    title: 'The daily loop', blurb: 'Open the app, start a session, get pinged when it ends, repeat until the day is clear.',
+    frames: [
+      { title: 'Today', note: 'The root screen. Only tasks scheduled for today; finished ones sink to the bottom. A running session shows its countdown on its card.', el: () => html`<${TodayScreen} />` },
+      { title: 'Timer', note: 'Live. Pause, reset or stop. Resuming replays the segment sweep, one segment at a time.', el: () => html`<${TimerScreen} mode="live" />` },
+      { title: 'Paused', note: 'The colon blinks and nothing else moves. Each bar on the strip is one minute left.', el: () => html`<${TimerScreen} mode="paused" />` },
+      { title: 'Session done', note: '00:00 flashes. There are no breaks, so the next session only starts when you tap.', el: () => html`<${TimerScreen} mode="done" />`, time: '14:07' },
+      { title: 'Notification', note: 'Scheduled for the end time when a session starts, so it arrives even if the app is closed.', el: () => html`<${LockScreen} />`, time: '' },
+      { title: 'Day cleared', note: 'Every scheduled session is done. The counter sweeps and today’s cell fills.', el: () => html`<${TodayScreen} cleared=${true} />`, time: '19:20' },
+    ],
+  },
+  {
+    title: 'Planning', blurb: 'A task is a name, the days it repeats on, a number of sessions, and a session length.',
+    frames: [
+      { title: 'Tasks', note: 'Every task with its days and session plan. Tasks without their own length follow the default.', el: () => html`<${TasksScreen} />` },
+      { title: 'Edit task', note: 'Repeats every day or on picked days. Sessions from 1 to 8. Length is the default unless switched to custom.', el: () => html`<${TasksScreen} editing=${true} />` },
+    ],
+  },
+  {
+    title: 'Record', blurb: 'A day’s shade is the share of its scheduled sessions you finished, so a light day and a heavy day are judged the same way.',
+    frames: [
+      { title: 'History', note: 'A year of days, one cell each, with the newest on the right. Days with nothing scheduled are outlined and never break a streak.', el: () => html`<${HistoryScreen} />` },
+      { title: 'Day detail', note: 'Tap any day to see which sessions got done.', el: () => html`<${HistoryScreen} openDay=${pickDetailDay()} />` },
+    ],
+  },
+  {
+    title: 'Display', blurb: 'Every design from Posy’s sheet, drawn segment by segment. Changing a setting here changes every screen on this page.',
+    frames: [
+      { title: 'Settings', note: 'Display, timer, alerts, calendar and backup. LED colour, unlit segments and glow are live.', el: () => html`<${SettingsScreen} />` },
+      { title: 'Display style', note: 'All 88 designs grouped by family. Tap one and the preview sweeps in.', el: () => html`<${StylePicker} />` },
+    ],
+  },
+];
+
+function pickDetailDay() {
+  for (let i = HISTORY.length - 14; i > 0; i--) {
+    const h = HISTORY[i];
+    if (h.fraction !== null && h.fraction > 0.4 && h.fraction < 0.9) return h.key;
+  }
+  return HISTORY[HISTORY.length - 2].key;
+}
+
+function ControlBar() {
+  const s = useSettings();
+  const idx = GLYPHS.findIndex((g) => g.id === s.styleId);
+  const step = (n) => s.set({ styleId: GLYPHS[(idx + n + GLYPHS.length) % GLYPHS.length].id });
+  const g = GLYPHS[idx];
+  return html`<div className="ctl-bar"><div className="inner gutter">
+    <span className="wordmark mono font-semibold tracking-[.18em] text-[14px]">DETONATO</span>
+    <div className="style-pill">
+      <button aria-label="Previous style" onClick=${() => step(-1)}><${Icon} name="chevL" size=${18} /></button>
+      <span style=${{ lineHeight: 0 }}><${Display} text="8" size="24px" /></span>
+      <span className="name">${glyphName(g)}${g.digits ? '' : ' · no digit map'}</span>
+      <button aria-label="Next style" onClick=${() => step(1)}><${Icon} name="chevR" size=${18} /></button>
+    </div>
+    <div className="ctl-group" role="group" aria-label="LED colour">
+      ${LEDS.map((l) => html`<button key=${l.id} className="ctl-swatch" aria-label=${l.name} aria-pressed=${s.led === l.id} onClick=${() => s.set({ led: l.id })}><span style=${{ background: l.hex }} /></button>`)}
+    </div>
+    <div className="ctl-group ctl-extra" role="group" aria-label="Unlit segments">
+      <span className="eyebrow" style=${{ color: 'var(--canvas-ink-2)' }}>Unlit</span>
+      ${Object.keys(GHOSTS).map((k) => html`<button key=${k} className="ctl-btn" aria-pressed=${s.ghost === k} onClick=${() => s.set({ ghost: k })}>${k[0].toUpperCase() + k.slice(1)}</button>`)}
+    </div>
+    <button className="ctl-btn ctl-extra" aria-pressed=${s.glow} onClick=${() => s.set({ glow: !s.glow })}>Glow ${s.glow ? 'on' : 'off'}</button>
+  </div></div>`;
+}
+
+function Canvas() {
+  let n = 0;
+  return html`<${ControlBar} />
+    <main className="gutter" style=${{ paddingBlock: '40px 64px' }}>
+      <div style=${{ maxWidth: '1760px', margin: '0 auto' }} className="grid gap-16">
+        <header className="grid gap-4" style=${{ maxWidth: '68ch' }}>
+          <span className="eyebrow" style=${{ color: 'var(--canvas-ink-2)' }}>Mobile mockup · first pass</span>
+          <h1 className="text-[34px] font-semibold tracking-tight leading-tight" style=${{ textWrap: 'balance' }}>A daily pomodoro list with a segment display for a timer</h1>
+          <p style=${{ color: 'var(--canvas-ink-2)' }}>Every screen of the app, using example tasks and a year of made-up history. Use the bar above to flip through the 88 segment designs, change the LED colour, or turn the unlit segments and glow on and off; every screen updates. The timer on screen 02 is running. <a href="#lab">Digit map lab</a> shows 0 to 9 in every design.</p>
+        </header>
+        ${FLOWS.map((flow) => html`<section key=${flow.title} className="grid gap-8">
+          <div className="section-head"><h2>${flow.title}</h2><p>${flow.blurb}</p></div>
+          <div className="frames">
+            ${flow.frames.map((f) => {
+              n++;
+              return html`<figure key=${f.title} className="frame">
+                <figcaption className="frame-cap">
+                  <span className="num"><${Display} text=${String(n).padStart(2, '0')} size="22px" label=${`Screen ${n}`} /></span>
+                  <span className="grid gap-1 min-w-0"><h3>${f.title}</h3><p>${f.note}</p></span>
+                </figcaption>
+                <${Phone} time=${f.time ?? '13:42'}>${f.el()}<//>
+              </figure>`;
+            })}
+          </div>
+        </section>`)}
+        <footer className="grid gap-2 text-[13.5px]" style=${{ color: 'var(--canvas-ink-2)', maxWidth: '72ch' }}>
+          <p>Segment designs: Segmented Display Designs Sheet v1.1 by Posy (Michiel de Boer), 2022. Free for non-commercial use with credit appreciated; commercial use needs permission from michieldb.nl.</p>
+          <p>${GLYPHS.filter((g) => g.digits).length} of ${GLYPHS.length} designs have digit maps worked out from their geometry. The rest show every segment lit until their maps are drawn by hand.</p>
+        </footer>
+      </div>
+    </main>`;
+}
+
+function Lab() {
+  return html`<main className="gutter" style=${{ paddingBlock: '32px 64px' }}>
+    <div style=${{ maxWidth: '1200px', margin: '0 auto' }} className="grid gap-4">
+      <a href="#" className="eyebrow">← Back to the screens</a>
+      <h1 className="text-[28px] font-semibold">Digit map lab</h1>
+      <p style=${{ color: 'var(--canvas-ink-2)', maxWidth: '68ch' }}>Digits 0 to 9 in each of the ${GLYPHS.length} designs. The method column says how the map was worked out: seven (seven pieces matched to a–g), six (no middle bar, so 0 and 8 look the same), regions (extra pieces assigned by position), matrix (cells checked against a dot font), or none yet.</p>
+      <div className="glow">
+        ${GLYPHS.map((g) => html`<div key=${g.id} className="lab-row">
+          <span className="grid"><span className="font-medium">${glyphName(g)}</span><span className="mono text-[12px]" style=${{ color: 'var(--canvas-ink-2)' }}>${g.id} · ${g.count} seg · ${g.how || 'none yet'}</span></span>
+          <span className="lab-digits"><${Display} text="0123456789" size="54px" glyphId=${g.id} /></span>
+        </div>`)}
+      </div>
+    </div>
+  </main>`;
+}
+
+function App() {
+  const [settings, setSettings] = useState(loadSettings);
+  const [route, setRoute] = useState(location.hash === '#lab' ? 'lab' : 'canvas');
+  useEffect(() => {
+    const on = () => { setRoute(location.hash === '#lab' ? 'lab' : 'canvas'); window.scrollTo(0, 0); };
+    addEventListener('hashchange', on);
+    return () => removeEventListener('hashchange', on);
+  }, []);
+  useEffect(() => {
+    const root = document.documentElement.style;
+    root.setProperty('--led', LEDS.find((l) => l.id === settings.led).hex);
+    root.setProperty('--ghost', GHOSTS[settings.ghost]);
+    document.body.classList.toggle('glow', settings.glow);
+    try { localStorage.setItem('detonato.mockup', JSON.stringify(settings)); } catch {}
+  }, [settings]);
+  useEffect(() => {
+    const fit = () => document.documentElement.style.setProperty('--phone-zoom', String(Math.min(1, (innerWidth - 32) / 410)));
+    fit();
+    addEventListener('resize', fit);
+    return () => removeEventListener('resize', fit);
+  }, []);
+  const api = useMemo(() => ({ ...settings, set: (patch) => setSettings((s) => ({ ...s, ...patch })) }), [settings]);
+  return html`<${SettingsCtx.Provider} value=${api}><${TimerProvider}>
+    ${route === 'lab' ? html`<${Lab} />` : html`<${Canvas} />`}
+  <//><//>`;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(html`<${App} />`);
+</script>
+</body>
+</html>

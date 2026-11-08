@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The status bar's icon for a session's end (lib/notifications › smallIcon): a seven-segment 8, as in
+     public/favicon.svg. Android draws it white and tints it the LED colour. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <path android:fillColor="#FFFFFFFF" android:pathData="M22,12h20l-3,5H25z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M20,14l4,4v11l-4,3z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M44,14l-4,4v11l4,3z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M24,30h16l2,2l-2,2H24l-2,-2z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M20,32l4,3v11l-4,4z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M44,32l-4,3v11l4,4z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M25,47h14l3,5H22z" />
+</vector>

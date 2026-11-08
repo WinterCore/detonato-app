@@ -1,0 +1,81 @@
+---
+/*
+ * Text in segments, as the app draws it (app/src/components/segments): each
+ * digit a ghost layer under a lit one whose segments switch alone (`.on`),
+ * and a colon between. Built at page build time from the app's designs.
+ * `countdown` carries the design's digit map, for the hero's script.
+ */
+import { glyph, lit } from '../lib/glyphs'
+
+interface Props {
+  /** A design id from the sheet: `sports-1`. */
+  design: string
+  /** Digits, and `:` for a colon. */
+  text: string
+  /** The digits' height, as a CSS length. */
+  size: string
+  /** What a screen reader says; the text itself by default. */
+  label?: string
+  /** The hero's countdown: its script finds it, and its digit map rides along. */
+  countdown?: boolean
+  class?: string
+}
+
+const { design, text, size, label, countdown = false, class: className } = Astro.props
+const g = glyph(design)
+const [bx, by, bw, bh] = g.box
+const viewBox = `${bx} ${by} ${bw} ${bh}`
+const width = `${(bw / bh).toFixed(4)}em`
+
+const extra: Record<string, string> = {}
+if (countdown) {
+  extra['data-countdown'] = JSON.stringify(g.digits)
+}
+
+type Part = { kind: 'colon' } | { kind: 'digit'; slot: number; on: Set<number> }
+const parts: Part[] = []
+let slot = 0
+for (const ch of text) {
+  if (ch === ':') {
+    parts.push({ kind: 'colon' })
+    continue
+  }
+  parts.push({ kind: 'digit', slot, on: new Set(lit(g, ch)) })
+  slot++
+}
+---
+
+<span class:list={['seg-display', className]} style={`font-size: ${size}`} role="img" aria-label={label ?? text} {...extra}>
+  {
+    parts.map((p) => {
+      if (p.kind === 'colon') {
+        return (
+          <span class="seg-mark" style="width: 0.1667em">
+            <svg class="ghost" viewBox="0 0 40 240" aria-hidden="true">
+              <rect x="6" y="64" width="28" height="28" rx="6" />
+              <rect x="6" y="148" width="28" height="28" rx="6" />
+            </svg>
+            <svg class="lit" viewBox="0 0 40 240" aria-hidden="true">
+              <rect x="6" y="64" width="28" height="28" rx="6" />
+              <rect x="6" y="148" width="28" height="28" rx="6" />
+            </svg>
+          </span>
+        )
+      }
+      return (
+        <span class="seg-digit" style={`width: ${width}; --d: ${p.slot}`} data-slot={p.slot}>
+          <svg class="ghost" viewBox={viewBox} aria-hidden="true">
+            {g.segments.map((m) => (
+              <g set:html={m} />
+            ))}
+          </svg>
+          <svg class="lit" viewBox={viewBox} aria-hidden="true">
+            {g.segments.map((m, i) => (
+              <g data-seg={i} class:list={[{ on: p.on.has(i) }]} style={`--i: ${i}`} set:html={m} />
+            ))}
+          </svg>
+        </span>
+      )
+    })
+  }
+</span>

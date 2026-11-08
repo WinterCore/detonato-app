@@ -1,0 +1,49 @@
+---
+/*
+ * A few of the 88 designs, each drawing «25», drifting past in an endless
+ * strip (two copies, the second picking up where the first ends). It
+ * pauses under the pointer and out of view, and stands still for less
+ * motion. No glow here: a blur on every moving digit is what made it crawl.
+ */
+import { designName, glyph } from '../lib/glyphs'
+import Display from './Display.astro'
+
+const DESIGNS = [
+  'sports-1',
+  'classic-bold-1',
+  'seamless-round-1',
+  'double-bubble-2',
+  '14-segment-1',
+  'x7-light-2',
+  'sports-black-9-2',
+  '3-5-matrix-1',
+  'solid-11-regular',
+  'freeform-6-2',
+  'fake-5-7-18-seg',
+  'no-compromise-1',
+]
+
+const items = DESIGNS.map((id) => ({ id, name: designName(glyph(id)) }))
+/** The strip twice over; the second copy is for the eye only. */
+const copies = [{ key: 'a', hidden: false }, { key: 'b', hidden: true }]
+---
+
+<div class="relative overflow-hidden" data-motion>
+  <div class="marquee flex w-max">
+    {
+      copies.map((copy) => (
+        <ul class="flex shrink-0 gap-12 pe-12" aria-hidden={copy.hidden}>
+          {items.map((item) => (
+            <li class="grid justify-items-center gap-3">
+              <Display design={item.id} text="25" size="64px" label={`25 in ${item.name}`} />
+              <span class="font-mono text-[11px] whitespace-nowrap text-ink-3">{item.name}</span>
+            </li>
+          ))}
+        </ul>
+      ))
+    }
+  </div>
+  <!-- The ends fade into the page: gradients painted over, not a mask, so the strip moves without redrawing. -->
+  <div class="pointer-events-none absolute inset-y-0 left-0 w-1/6 bg-linear-to-r from-bg to-transparent"></div>
+  <div class="pointer-events-none absolute inset-y-0 right-0 w-1/6 bg-linear-to-l from-bg to-transparent"></div>
+</div>

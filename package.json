@@ -1,0 +1,17 @@
+{
+  "name": "detonato",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @detonato/app dev",
+    "landing": "pnpm --filter @detonato/landing dev",
+    "build": "pnpm -r build",
+    "test": "pnpm --filter @detonato/app test",
+    "e2e": "pnpm --filter @detonato/app e2e",
+    "lint": "pnpm --filter @detonato/app lint",
+    "glyphs": "pnpm --filter @detonato/app glyphs",
+    "icons": "pnpm --filter @detonato/app icons",
+    "downloads": "pnpm --filter @detonato/app downloads"
+  }
+}

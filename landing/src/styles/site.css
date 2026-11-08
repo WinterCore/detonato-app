@@ -1,0 +1,149 @@
+@import 'tailwindcss';
+/* The app's own look: its colours and its segment display, so the site and the app never drift apart. */
+@import '../../../app/src/styles/tokens.css';
+@import '../../../app/src/components/segments/segments.css';
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-window: var(--window);
+  --color-panel: var(--panel);
+  --color-raised: var(--raised);
+  --color-line: var(--line);
+  --color-edge: var(--edge);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-led: var(--led);
+  --color-on-led: var(--on-led);
+  --color-lvl-0: var(--lvl-0);
+  --color-lvl-1: var(--lvl-1);
+  --color-lvl-2: var(--lvl-2);
+  --color-lvl-3: var(--lvl-3);
+  --color-lvl-4: var(--lvl-4);
+  --color-led-ring: var(--led-ring);
+  --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+html {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * ─── Cheap to draw ───
+ * Blur filters, masks and blurred shadows on things that move redraw on
+ * every frame, and that's what made the page crawl. So the glow stays only
+ * on the hero's countdown (the app's own, small); the big halo behind it is
+ * a gradient; the edge fades are gradients painted over; and every endless
+ * animation pauses while its section is out of view (`[data-motion].paused`).
+ */
+.hero-halo {
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--led) 16%, transparent), transparent);
+}
+.glow .marquee .seg-digit .lit,
+.glow .marquee .seg-mark .lit {
+  filter: none;
+}
+.paused .breathe,
+.paused .marquee,
+.paused .pulse {
+  animation-play-state: paused;
+}
+
+/* ─── The grid behind the hero: days breathing on and off ─── */
+.breathe {
+  animation: breathe var(--t) ease-in-out var(--delay) infinite;
+  will-change: opacity;
+}
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ─── «Every day, lit»: the map fills column by column once it's in view ─── */
+.heat .cell {
+  background: var(--lvl-0);
+  transition: background-color 380ms ease-out;
+  transition-delay: calc(var(--c) * 45ms);
+}
+.heat.lit .cell.l1 {
+  background: var(--lvl-1);
+}
+.heat.lit .cell.l2 {
+  background: var(--lvl-2);
+}
+.heat.lit .cell.l3 {
+  background: var(--lvl-3);
+}
+.heat.lit .cell.l4 {
+  background: var(--lvl-4);
+}
+.heat .cell.rest {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--rest);
+}
+
+/* ─── The designs, drifting past ─── */
+.marquee {
+  animation: marquee 70s linear infinite;
+  will-change: transform;
+}
+.marquee:hover {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ─── A slow pulse: the pill's LED, the scroll hint ─── */
+.pulse {
+  animation: pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ─── Rising in as the page opens ─── */
+.rise {
+  animation: rise 900ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: var(--delay, 0ms);
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+  .breathe {
+    animation: none;
+    opacity: 0.4;
+  }
+}

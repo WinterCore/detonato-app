@@ -1,0 +1,32 @@
+# Logs
+logs
+*.log
+pnpm-debug.log*
+
+node_modules
+dist
+dist-e2e
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.sw?
+
+# Playwright
+test-results
+playwright-report
+
+# Astro
+.astro
+
+# Claude Code, per machine
+.claude/settings.local.json
+
+# Android release signing: the key lives outside the repo (~/Keys); these details never get committed.
+app/android/keystore.properties
+*.jks
+*.keystore

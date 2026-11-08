@@ -1,0 +1,8 @@
+packages:
+  - app
+  - landing
+
+# Install scripts pnpm may run: esbuild checks its prebuilt binary (Astro builds with it); the landing page optimises no images, so sharp needs none.
+allowBuilds:
+  esbuild: true
+  sharp: false
