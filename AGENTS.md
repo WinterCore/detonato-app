@@ -413,3 +413,19 @@ pnpm --filter @detonato/landing build     # astro check, then the static site in
   site`).
 - The app's code rules apply: no ternaries, braces on every `if` and loop.
 
+## Hosting
+
+Both websites ship as one Docker image (`Dockerfile`, `nginx.conf`), built
+from the repository root:
+
+- **8080:** the landing page, at detonato.wintercore.xyz.
+- **8081:** the web app, at detonato-app.wintercore.xyz. Any path that isn't a
+  file falls back to `index.html`, so a screen's URL opens it.
+- Hashed build files (`/_astro/`, `/assets/`) are cached for a year; the pages
+  themselves are never cached, so a deploy shows at once.
+- **Dokploy:** one Application, build type Dockerfile, Dockerfile path
+  `Dockerfile`, context `.`. Add two domains, one per site, each with its
+  container port and HTTPS. Traefik routes them, so no host ports need
+  publishing.
+- `.dockerignore` keeps the native projects, `node_modules` and build output
+  out of the build.

@@ -1,0 +1,14 @@
+# Not needed to build the two websites (Dockerfile), or rebuilt inside it.
+**/node_modules
+.git
+.claude
+app/android
+app/ios
+app/release
+app/dist
+app/test-results
+app/playwright-report
+landing/dist
+landing/.astro
+mockup
+docs

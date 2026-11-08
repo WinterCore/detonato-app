@@ -79,6 +79,14 @@ pnpm downloads  # the APK and IPA for a release, into app/release (needs the rel
 For the phone apps: `cd app && pnpm build && pnpm exec cap sync`, then open
 `app/android` in Android Studio or `app/ios/App/App.xcodeproj` in Xcode.
 
+To host both websites, build the Docker image at the root: it serves the
+landing page on port 8080 and the web app on 8081.
+
+```sh
+docker build -t detonato .
+docker run --rm -p 8080:8080 -p 8081:8081 detonato
+```
+
 ## Credits
 
 - Segment designs by [Posy (Michiel de Boer)](https://michieldb.nl), from his
