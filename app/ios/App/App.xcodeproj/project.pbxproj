@@ -16,7 +16,41 @@
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
+		DE70A700000000000000000A /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE70A7000000000000000001 /* MainViewController.swift */; };
+		DE70A700000000000000000B /* SessionNoticePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE70A7000000000000000002 /* SessionNoticePlugin.swift */; };
+		DE70A700000000000000000C /* SessionLive.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE70A7000000000000000003 /* SessionLive.swift */; };
+		DE70A700000000000000000D /* SessionAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE70A7000000000000000004 /* SessionAttributes.swift */; };
+		DE70A700000000000000000E /* SessionIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE70A7000000000000000005 /* SessionIntents.swift */; };
+		DE70A700000000000000000F /* SessionAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE70A7000000000000000004 /* SessionAttributes.swift */; };
+		DE70A7000000000000000010 /* SessionIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE70A7000000000000000005 /* SessionIntents.swift */; };
+		DE70A7000000000000000011 /* SessionActivityBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE70A7000000000000000006 /* SessionActivityBundle.swift */; };
+		DE70A7000000000000000012 /* SessionActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE70A7000000000000000007 /* SessionActivityWidget.swift */; };
+		DE70A7000000000000000013 /* SessionActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = DE70A7000000000000000009 /* SessionActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		DE70A7000000000000000014 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DE70A7000000000000000015;
+			remoteInfo = SessionActivity;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		DE70A7000000000000000016 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				DE70A7000000000000000013 /* SessionActivity.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
@@ -30,6 +64,15 @@
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		9582B6822FE993A50072D4E8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
+		DE70A7000000000000000001 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
+		DE70A7000000000000000002 /* SessionNoticePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionNoticePlugin.swift; sourceTree = "<group>"; };
+		DE70A7000000000000000003 /* SessionLive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionLive.swift; sourceTree = "<group>"; };
+		DE70A7000000000000000004 /* SessionAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionAttributes.swift; sourceTree = "<group>"; };
+		DE70A7000000000000000005 /* SessionIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionIntents.swift; sourceTree = "<group>"; };
+		DE70A7000000000000000006 /* SessionActivityBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionActivityBundle.swift; sourceTree = "<group>"; };
+		DE70A7000000000000000007 /* SessionActivityWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionActivityWidget.swift; sourceTree = "<group>"; };
+		DE70A7000000000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DE70A7000000000000000009 /* SessionActivity.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SessionActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -41,6 +84,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DE70A7000000000000000017 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -49,6 +99,7 @@
 			children = (
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
+				DE70A7000000000000000018 /* SessionActivity */,
 				504EC3051FED79650016851F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -57,6 +108,7 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				DE70A7000000000000000009 /* SessionActivity.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -65,6 +117,11 @@
 			isa = PBXGroup;
 			children = (
 				9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,
+				DE70A7000000000000000001 /* MainViewController.swift */,
+				DE70A7000000000000000002 /* SessionNoticePlugin.swift */,
+				DE70A7000000000000000003 /* SessionLive.swift */,
+				DE70A7000000000000000004 /* SessionAttributes.swift */,
+				DE70A7000000000000000005 /* SessionIntents.swift */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
@@ -77,6 +134,16 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		DE70A7000000000000000018 /* SessionActivity */ = {
+			isa = PBXGroup;
+			children = (
+				DE70A7000000000000000006 /* SessionActivityBundle.swift */,
+				DE70A7000000000000000007 /* SessionActivityWidget.swift */,
+				DE70A7000000000000000008 /* Info.plist */,
+			);
+			path = SessionActivity;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -87,10 +154,12 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
+				DE70A7000000000000000016 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				DE70A7000000000000000019 /* PBXTargetDependency */,
 			);
 			name = App;
 			packageProductDependencies = (
@@ -99,6 +168,23 @@
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
+		};
+		DE70A7000000000000000015 /* SessionActivity */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DE70A700000000000000001A /* Build configuration list for PBXNativeTarget "SessionActivity" */;
+			buildPhases = (
+				DE70A700000000000000001B /* Sources */,
+				DE70A7000000000000000017 /* Frameworks */,
+				DE70A700000000000000001C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SessionActivity;
+			productName = SessionActivity;
+			productReference = DE70A7000000000000000009 /* SessionActivity.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -112,6 +198,10 @@
 					504EC3031FED79650016851F = {
 						CreatedOnToolsVersion = 9.2;
 						LastSwiftMigration = 1100;
+						ProvisioningStyle = Automatic;
+					};
+					DE70A7000000000000000015 = {
+						CreatedOnToolsVersion = 16.0;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -133,6 +223,7 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				DE70A7000000000000000015 /* SessionActivity */,
 			);
 		};
 /* End PBXProject section */
@@ -151,6 +242,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DE70A700000000000000001C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -160,10 +258,34 @@
 			files = (
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
+				DE70A700000000000000000A /* MainViewController.swift in Sources */,
+				DE70A700000000000000000B /* SessionNoticePlugin.swift in Sources */,
+				DE70A700000000000000000C /* SessionLive.swift in Sources */,
+				DE70A700000000000000000D /* SessionAttributes.swift in Sources */,
+				DE70A700000000000000000E /* SessionIntents.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DE70A700000000000000001B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DE70A7000000000000000011 /* SessionActivityBundle.swift in Sources */,
+				DE70A7000000000000000012 /* SessionActivityWidget.swift in Sources */,
+				DE70A700000000000000000F /* SessionAttributes.swift in Sources */,
+				DE70A7000000000000000010 /* SessionIntents.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		DE70A7000000000000000019 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DE70A7000000000000000015 /* SessionActivity */;
+			targetProxy = DE70A7000000000000000014 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -307,7 +429,14 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-weak_framework",
+					ActivityKit,
+					"-weak_framework",
+					AppIntents,
+				);
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = xyz.wintercore.detonato;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -329,10 +458,63 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-weak_framework",
+					ActivityKit,
+					"-weak_framework",
+					AppIntents,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = xyz.wintercore.detonato;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		DE70A700000000000000001D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = SessionActivity/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = xyz.wintercore.detonato.SessionActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG WIDGET_EXTENSION";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		DE70A700000000000000001E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = SessionActivity/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = xyz.wintercore.detonato.SessionActivity;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "WIDGET_EXTENSION";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -355,6 +537,15 @@
 			buildConfigurations = (
 				504EC3171FED79650016851F /* Debug */,
 				504EC3181FED79650016851F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DE70A700000000000000001A /* Build configuration list for PBXNativeTarget "SessionActivity" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DE70A700000000000000001D /* Debug */,
+				DE70A700000000000000001E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -23,11 +23,13 @@ Detonato isn't on the App Store or Google Play. Get it from
 
 - **In your browser:** [detonato-app.wintercore.xyz](https://detonato-app.wintercore.xyz),
   nothing to install.
-- **Android:** [detonato.apk](https://detonato.wintercore.xyz/downloads/detonato.apk).
+- **Android:** [detonato.apk](https://github.com/WinterCore/detonato-app/releases/latest/download/detonato.apk).
   Let your browser install it when it asks.
-- **iPhone:** [detonato.ipa](https://detonato.wintercore.xyz/downloads/detonato.ipa),
+- **iPhone:** [detonato.ipa](https://github.com/WinterCore/detonato-app/releases/latest/download/detonato.ipa),
   unsigned: install it with [AltStore](https://altstore.io),
   [SideStore](https://sidestore.io) or [Sideloadly](https://sideloadly.io).
+
+Every version is on the [releases page](https://github.com/WinterCore/detonato-app/releases).
 
 ## Features
 
@@ -39,8 +41,9 @@ Detonato isn't on the App Store or Google Play. Get it from
   tile per task, and quick sessions that aren't logged.
 - **History.** The current and best streak, perfect days and focus over the
   last 12 months, a year of days to tap through, and each task's last 30 days.
-- **A notification when a session ends,** with sound and vibration, even with
-  the app closed (iOS and Android).
+- **The session on your lock screen.** A countdown with Pause and Stop while a
+  session runs (a notification on Android, a Live Activity on iPhone), and an
+  alert with sound and vibration when it ends, even with the app closed.
 - **Edits never rewrite the past.** Each day is judged by the plan it had then,
   so changing or deleting a task leaves your streak alone.
 - **Yours, on your phone.** No account and no server: everything stays on the
@@ -70,7 +73,7 @@ pnpm test       # unit tests
 pnpm e2e        # end-to-end tests (Playwright on the system Chrome)
 pnpm lint
 pnpm build      # both packages
-pnpm downloads  # the APK and IPA, into landing/public/downloads (needs the release key, Android Studio and Xcode)
+pnpm downloads  # the APK and IPA for a release, into app/release (needs the release key, Android Studio and Xcode)
 ```
 
 For the phone apps: `cd app && pnpm build && pnpm exec cap sync`, then open

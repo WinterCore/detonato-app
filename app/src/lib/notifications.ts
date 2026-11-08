@@ -1,18 +1,21 @@
+import { App } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
 import { LocalNotifications } from '@capacitor/local-notifications'
 import { AndroidSettings, IOSSettings, NativeSettings } from 'capacitor-native-settings'
-import { LED_HEX, type Settings } from '@/core/settings'
-import type { EndNotice } from '@/core/notice'
-import { END_CHANNEL_PREFIX, endChannel, SOUND_FILES } from '@/core/sounds'
+import type { Settings } from '@/core/settings'
+import { END_CHANNEL_PREFIX, endChannel } from '@/core/sounds'
 
 /*
- * The notification a session's end sends, handed to the phone when the
- * session starts so it arrives with the app closed or the phone locked. The
- * apps only: a web page can't wake itself.
+ * The phone's side of notifying: permission, Android's channel for the end's
+ * sound, and taps that open the timer. The apps only: a web page can't wake
+ * itself. What a session shows while it's under way, and its end's alert,
+ * are `lib/sessionNotice`'s.
  */
 
-/** There's one session at a time, so one notification, always this id. */
+/** There's one session at a time, so one end alert, always this id. */
 const END_ID = 1
+/** Where a tap on the countdown, or the Live Activity, opens the app. */
+const TIMER_URL = 'detonato://timer'
 
 /** Whether this device can notify: the native app. */
 export const canNotify = (): boolean => Capacitor.isNativePlatform()
@@ -64,49 +67,56 @@ export async function openNotificationSettings(): Promise<void> {
  * and the session-end channels for other choices removed: the phone's
  * settings list only the one in use.
  */
-async function readyChannel(settings: Settings): Promise<string> {
+export async function readyChannel(settings: Settings): Promise<string> {
   const channel = endChannel(settings.sound, settings.haptics)
-  if (Capacitor.getPlatform() !== 'android') return channel.id
+  if (Capacitor.getPlatform() !== 'android') {
+    return channel.id
+  }
+  await loaded()
   const { channels } = await LocalNotifications.listChannels()
   for (const c of channels) {
-    if (c.id.startsWith(END_CHANNEL_PREFIX) && c.id !== channel.id) await LocalNotifications.deleteChannel({ id: c.id })
+    if (c.id.startsWith(END_CHANNEL_PREFIX) && c.id !== channel.id) {
+      await LocalNotifications.deleteChannel({ id: c.id })
+    }
   }
-  if (!channels.some((c) => c.id === channel.id)) await LocalNotifications.createChannel(channel)
+  if (!channels.some((c) => c.id === channel.id)) {
+    await LocalNotifications.createChannel(channel)
+  }
   return channel.id
 }
 
-/** The end's notification at `at`, in the chosen sound. Replaces any end already handed over. */
-export async function scheduleEnd(at: number, notice: EndNotice, settings: Settings): Promise<void> {
-  await loaded()
-  const channelId = await readyChannel(settings)
-  await LocalNotifications.schedule({
-    notifications: [
-      {
-        id: END_ID,
-        title: notice.title,
-        body: notice.body,
-        schedule: { at: new Date(at), allowWhileIdle: true },
-        channelId,
-        // iOS plays a file from the web assets (public/); Android plays its channel's.
-        sound: SOUND_FILES[settings.sound] ?? undefined,
-        smallIcon: 'ic_stat_detonato',
-        iconColor: LED_HEX[settings.led],
-      },
-    ],
-  })
-}
+/** The URL the app was started with is looked at once a run: it stays the same however often the listener is made again. */
+let launchSeen = false
 
-/** The end handed over is taken back: the session was paused, reset or stopped — or the app is there to tell it. */
-export async function cancelEnd(): Promise<void> {
-  await loaded()
-  await LocalNotifications.cancel({ notifications: [{ id: END_ID }] })
-}
-
-/** Calls `open` when the end's notification is tapped. Returns a stop function. */
-export function onEndTapped(open: () => void): () => void {
-  if (!canNotify()) return () => {}
-  const listening = LocalNotifications.addListener('localNotificationActionPerformed', (e) => {
-    if (e.notification.id === END_ID) open()
-  })
-  return () => void listening.then((l) => l.remove())
+/**
+ * Calls `open` when a session's notification is tapped: the end's alert, the
+ * countdown, or the Live Activity — also when the tap is what started the
+ * app. Returns a stop function.
+ */
+export function onNoticeTapped(open: () => void): () => void {
+  if (!canNotify()) {
+    return () => {}
+  }
+  const openIfTimer = (url: string | undefined) => {
+    if (url?.startsWith(TIMER_URL)) {
+      open()
+    }
+  }
+  if (!launchSeen) {
+    launchSeen = true
+    void App.getLaunchUrl().then((launch) => openIfTimer(launch?.url))
+  }
+  const listening = [
+    LocalNotifications.addListener('localNotificationActionPerformed', (e) => {
+      if (e.notification.id === END_ID) {
+        open()
+      }
+    }),
+    App.addListener('appUrlOpen', (e) => openIfTimer(e.url)),
+  ]
+  return () => {
+    for (const l of listening) {
+      void l.then((handle) => handle.remove())
+    }
+  }
 }

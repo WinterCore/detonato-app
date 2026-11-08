@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { endNotice } from './notice'
+import { countdownNotice, endNotice } from './notice'
 import { plan, sessions, snap, task } from './testkit'
 
 const DAY = '2026-11-05'
@@ -22,6 +22,24 @@ describe('endNotice', () => {
     expect(endNotice({ ...running, taskId: null, length: 25 * 60_000 }, snap([deep]))).toEqual({
       title: 'Session done',
       body: '25 minutes of focus.',
+    })
+    expect(endNotice({ ...running, taskId: null, length: 60_000 }, snap([deep])).body).toBe('1 minute of focus.')
+  })
+})
+
+describe('countdownNotice', () => {
+  it('names the task and the session under way', () => {
+    expect(countdownNotice({ ...running, taskId: 'deep' }, snap([deep], sessions('deep', DAY, 1)))).toEqual({
+      title: 'Deep work',
+      body: 'Session 2 of 3',
+    })
+    expect(countdownNotice({ ...running, taskId: 'deep' }, snap([deep], sessions('deep', DAY, 3))).body).toBe('Extra session')
+  })
+
+  it('tells a quick session’s minutes', () => {
+    expect(countdownNotice({ ...running, taskId: null, length: 25 * 60_000 }, snap([deep]))).toEqual({
+      title: 'Quick session',
+      body: '25 minutes',
     })
   })
 })

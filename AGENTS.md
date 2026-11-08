@@ -43,7 +43,7 @@ pnpm build   # tsc -b + vite build
 pnpm glyphs  # regenerate src/core/segments/glyphs.json from the sheet (needs Inkscape)
 pnpm sounds  # render the notification's WAVs from src/core/sounds.ts into public/ and android/…/res/raw/
 pnpm icons   # draw the icon and splash (scripts/icons.ts), render assets/*.png (Inkscape), write every size into ios/ and android/
-pnpm downloads  # the signed release APK and an unsigned IPA, into landing/public/downloads/ (scripts/downloads.sh)
+pnpm downloads  # the signed release APK and an unsigned IPA, into release/, for a GitHub release (scripts/downloads.sh)
 pnpm exec cap sync   # after `pnpm build`: copy dist/ and the plugins into both native projects
 ```
 
@@ -61,12 +61,19 @@ UI, before it's called fixed.
     `JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"`.
   - iOS: open `ios/App/App.xcodeproj` in Xcode. It uses Swift Package
     Manager; there's no CocoaPods.
-- **Releases.** The app isn't on either store: the landing page offers the
-  files directly, and the web build runs at detonato-app.wintercore.xyz.
+- **Releases.** The app isn't on either store: the files are on the
+  repository's GitHub releases, and the web build runs at
+  detonato-app.wintercore.xyz.
   - `pnpm downloads` builds a release APK and an unsigned Release IPA into
-    `landing/public/downloads/`, committed so any static deploy serves
-    them. The IPA is for AltStore, SideStore or Sideloadly, which re-sign it
-    with the installer's own Apple ID.
+    `release/` (gitignored), always as `detonato.apk` and `detonato.ipa`.
+    The IPA is for AltStore, SideStore or Sideloadly, which re-sign it with
+    the installer's own Apple ID.
+  - **Publishing:** raise the versions (below), commit, and push; then
+    `gh release create v<version> --title "Detonato <version>" --notes-file
+    <notes> release/detonato.apk release/detonato.ipa`. Keep those names: the
+    landing page and the README link to
+    `releases/latest/download/detonato.apk` (and `.ipa`), which GitHub sends
+    to the newest release's file, so the links never change.
   - **Signing:** release builds sign with the key that
     `android/keystore.properties` names (gitignored: `storeFile`,
     `storePassword`, `keyAlias`, `keyPassword`). The key lives outside the
@@ -74,8 +81,9 @@ UI, before it's called fixed.
     must be signed with the same key, or Android refuses to install it over
     the old one: back the key and its password up.
   - **Versions:** keep `package.json › version`, Android's `versionName`
-    and iOS's `MARKETING_VERSION` in step, and raise Android's
-    `versionCode` by one for each release, or the APK won't update.
+    and iOS's `MARKETING_VERSION` (in both targets, App and
+    SessionActivity) in step, and raise Android's `versionCode` by one for
+    each release, or the APK won't update.
 - **Debugging:** a debug build's WebView can be debugged from
   `chrome://inspect`, or driven with Playwright's `connectOverCDP` after
   `adb forward tcp:9223 localabstract:webview_devtools_remote_<pid>`. That
@@ -86,6 +94,12 @@ UI, before it's called fixed.
     capped at API 32, so a session's end arrives on time. Google Play allows
     `USE_EXACT_ALARM` for apps whose core is a timer; say so when
     submitting.
+  - `AndroidManifest.xml`: `RECEIVE_BOOT_COMPLETED` and
+    `session.SessionReceiver`, the countdown's buttons, the end's alarm and
+    the reboot (see **Notifications**).
+  - `java/…/detonato/session/`: the app's own plugin, SessionNotice, and
+    `MainActivity` registering it; `res/layout/notification_session.xml`,
+    the countdown's layout.
   - `res/drawable/ic_stat_detonato.xml`: the status-bar icon.
   - `res/raw/session_*.wav`: written by `pnpm sounds`.
   - `res/values/styles.xml`: `windowSplashScreenBackground` on the launch
@@ -93,6 +107,14 @@ UI, before it's called fixed.
     white; `ic_launcher_background` is the same #0B0C0D.
   - `capacitor.config.ts › backgroundColor`: the ground behind the web
     view, so the first frame is never white.
+  - iOS: the `SessionActivity` widget extension target (the Live
+    Activity), embedded in App; `App/Session*.swift`, SessionNotice and its
+    shared types (`SessionAttributes`, `SessionIntents` are in both
+    targets; the widget's build defines `WIDGET_EXTENSION`);
+    `MainViewController`, which registers the plugin, as the scene's root
+    and in Main.storyboard; Info.plist's `NSSupportsLiveActivities` and the
+    `detonato` URL scheme. The app still runs on iOS 15, so it weak-links
+    ActivityKit and AppIntents (`OTHER_LDFLAGS`).
 - **App icon and splash:** a countdown dial, three quarters lit, with «25»
   in Sports segments, on the app's ground. `pnpm icons` draws it
   (`scripts/icons.ts`), renders the sources in `assets/`, and runs
@@ -130,8 +152,8 @@ src/
     segments/      the segment display: Display, Digit, Mark
   ui/            logic-free rendering primitives
   lib/           small helpers shared by several features, never components (applyDisplay, clock,
-                 session, startSession, notifications, keepAwake, haptics, sound, useSecondsLeft,
-                 weekDays, links)
+                 session, sessionNotice, startSession, notifications, keepAwake, haptics, sound,
+                 useSecondsLeft, weekDays, links)
   styles/        tokens.css holds the raw values; theme.css holds fonts, scales and the token mapping
   dev/           dev-only pages
 ```
@@ -183,8 +205,9 @@ maps its files, and screens import from `@/state` only (lint enforces it).
   named `settings/led`, `app/boot` and so on.
 - **Boot:** `main.tsx` awaits `boot()` before the first render, so nothing
   flashes. It opens IndexedDB and loads the tasks and sessions, reads the
-  settings and the session under way from localStorage, and settles a
-  session that ended while the app was closed. If the database won't open,
+  settings and the session under way from localStorage, replays the moves
+  made on the notification while the app was closed, and only then settles
+  a session that ended meanwhile. If the database won't open,
   the app shows a line saying so instead.
 - **Tasks and sessions** (`state/tasks.ts`, `storage/`):
   - They live in IndexedDB (`storage/db.ts`: stores `tasks`, and
@@ -233,13 +256,17 @@ maps its files, and screens import from `@/state` only (lint enforces it).
 - **Side effects follow the store.** `lib/session.ts › followSession` keeps
   every effect of a session in step, whatever screen is open:
   - the end, on time;
-  - the notification for it (`lib/notifications`), handed to the phone at
-    start or resume and taken back on pause, reset or stop;
+  - the session on the phone (`lib/sessionNotice`): its countdown while it
+    runs or is held, with the end's alert handed over while it runs; the
+    countdown put away when it's done, and the alert taken back too when
+    it's stopped;
+  - the moves made on that countdown, taken and replayed before any end is
+    settled (when the end comes, the app comes back, or a move tells it);
   - keep-awake;
   - the sound and buzz when the end comes with the app in front. Just
-    before the end, an app in front takes the notification back so the
-    phone doesn't ring too, and hands it over again if the app leaves in
-    those last 1.5 s.
+    before the end, an app in front takes the alert back so the phone
+    doesn't ring too, and hands it over again if the app leaves in those
+    last 1.5 s.
 
   `lib/applyDisplay › followDisplay` does the same for the LED settings.
 - **Local UI state stays local** (which sheet is open) as `useState` in the
@@ -279,16 +306,43 @@ maps its files, and screens import from `@/state` only (lint enforces it).
 - **Permission:** asked on the first Start, or when the row is switched on.
   A refusal turns the setting off, and Settings then shows a notice that
   opens the phone's settings.
-- **One notification**, id 1, because there's one session at a time. It
+- **One switch** in Settings, «Notifications», covers both of a session's
+  notifications.
+- **The countdown,** while a session runs or is held: the task and its
+  session (`core/notice.ts › countdownNotice`), the time left, and Pause or
+  Resume, and Stop. The phone draws the clock, so nothing in the app has
+  to run for it.
+  - Android: an ongoing notification, id 2, on a channel with no sound,
+    «Session under way». At the end it gives way to the end's alert, and
+    Stop removes it. The user can still swipe it away.
+  - iOS: a Live Activity, on the lock screen and in the Dynamic Island,
+    from iOS 16.2; its buttons need iOS 17. It can't end itself: at the end
+    it goes stale and reads «Session done» until the app opens and ends it.
+- **The end's alert**, id 1, because there's one session at a time. It
   reads «Deep work» / «Session 2 of 3 done · 50 minutes» for a task, or
-  «Session done» for a quick session (`core/notice.ts`).
+  «Session done» for a quick session (`core/notice.ts › endNotice`).
+- **Both belong to SessionNotice**, the app's own native plugin
+  (`lib/sessionNotice.ts`; `android/…/detonato/session/`;
+  `ios/App/App/Session*.swift` and `ios/App/SessionActivity/`). The local
+  notifications plugin still asks permission, makes Android's sound
+  channels, and reports iOS taps on the alert.
+  - **The buttons work with the app closed.** A tap moves the native copy
+    of the session with the app's rules, shows it, cancels or re-sets the
+    alert (Android: an exact alarm; iOS: a pending request), and queues the
+    move with its time. The app takes the queue (`takeCommands`) and
+    replays it (`core/timer › replay`), at boot before settling, so a
+    session paused there before its end opens paused, not done. A running
+    app is told at once (`commands`).
+  - Android sets the alarm and the countdown again after a reboot
+    (`SessionReceiver`).
 - **Sound:**
   - Android: a channel's sound and vibration are fixed once it exists, so
     each sound and haptics pair gets its own channel (`core/sounds.ts ›
     endChannel`). Only the channel in use is kept.
-  - iOS: the plugin plays the WAV from the web assets (`public/`), so no
+  - iOS: the alert plays the WAV from the web assets (`public/`), so no
     Xcode resources are needed.
-- **Tapping it** opens `/timer`.
+- **Tapping either** opens `/timer`: both open `detonato://timer`, which
+  `@capacitor/app` reports (`lib/notifications › onNoticeTapped`).
 
 ## Design guidelines
 
@@ -353,8 +407,8 @@ pnpm --filter @detonato/landing build     # astro check, then the static site in
 - **Motion** is CSS plus two small scripts (`src/scripts/`): the hero's
   countdown and the map filling in view. All of it stands still for
   `prefers-reduced-motion`.
-- **Downloads:** the hero links to the APK and IPA in `public/downloads/`
-  (sizes read at build time, `src/lib/downloads.ts`) and to the web app.
+- **Downloads:** the hero links to the APK and IPA on the latest GitHub
+  release (`src/lib/downloads.ts`, see **Releases**) and to the web app.
   The site itself lives at detonato.wintercore.xyz (`astro.config.mjs ›
   site`).
 - The app's code rules apply: no ternaries, braces on every `if` and loop.

@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 #
-# The landing page's direct downloads, since the app isn't on either store:
+# The files a GitHub release carries, since the app isn't on either store:
 # a release APK, signed with the key android/keystore.properties names, and
 # an unsigned IPA, which AltStore, SideStore or Sideloadly re-sign with the
-# installer's own Apple ID. Writes landing/public/downloads/.
+# installer's own Apple ID. Writes release/detonato.apk and .ipa — the same
+# names every release, so the landing page's links to the latest release
+# never change. See AGENTS.md › Releases.
 #
 #   pnpm downloads
 set -euo pipefail
 
 app="$(cd "$(dirname "$0")/.." && pwd)"
-out="$app/../landing/public/downloads"
+out="$app/release"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 

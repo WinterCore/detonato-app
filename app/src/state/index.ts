@@ -30,4 +30,13 @@ export {
 } from './settings'
 export { get, useApp, type AppState } from './store'
 export { removeTask, saveTask } from './tasks'
-export { closeSession, pauseSession, resetSession, resumeSession, settleSession, startSession, stopSession } from './timer'
+export {
+  applyCommands,
+  closeSession,
+  pauseSession,
+  resetSession,
+  resumeSession,
+  settleSession,
+  startSession,
+  stopSession,
+} from './timer'

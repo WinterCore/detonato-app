@@ -2,11 +2,13 @@ import { dayKey } from '@/core/time/calendar'
 import {
   IDLE,
   pauseTimer,
+  replay,
   resetTimer,
   resumeTimer,
   sessionRecord,
   settleTimer,
   startTimer,
+  type NoticeCommand,
   type TimerState,
 } from '@/core/timer'
 import type { TaskId } from '@/core/types'
@@ -66,3 +68,5 @@ export const stopSession = () => move('stop', () => IDLE)
 export const settleSession = () => move('end', settleTimer)
 /** The done screen put away. */
 export const closeSession = () => move('close', () => IDLE)
+/** The moves made on the phone's notification, each at its own time. */
+export const applyCommands = (commands: readonly NoticeCommand[]) => move('notice', (t) => replay(t, commands))

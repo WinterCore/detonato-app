@@ -3,7 +3,7 @@ import { makeBackup } from '@/core/backup'
 import { GLYPHS, glyphById } from '@/core/segments/glyphs'
 import { DEFAULT_SETTINGS } from '@/core/settings'
 import { EMPTY_SNAPSHOT } from '@/core/types'
-import { minutesLabel, restoreLine, settingsView, styleLine } from './settingsView'
+import { restoreLine, settingsView, styleLine } from './settingsView'
 
 const view = (patch = {}) => {
   const s = { ...DEFAULT_SETTINGS, ...patch }
@@ -47,13 +47,6 @@ describe('styleLine', () => {
   it('says when a design has no digit map', () => {
     const unmapped = { ...glyphById('sports-1'), digits: null, how: null }
     expect(styleLine(unmapped, GLYPHS)).toMatch(/ · no digit map$/)
-  })
-})
-
-describe('minutesLabel', () => {
-  it('counts minutes', () => {
-    expect(minutesLabel(1)).toBe('1 minute')
-    expect(minutesLabel(25)).toBe('25 minutes')
   })
 })
 

@@ -30,3 +30,6 @@ playwright-report
 app/android/keystore.properties
 *.jks
 *.keystore
+
+# `pnpm downloads`: the APK and IPA for a GitHub release, uploaded there, never committed.
+app/release/

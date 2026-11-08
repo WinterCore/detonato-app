@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { followDisplay } from '@/lib/applyDisplay'
 import { followDay } from '@/lib/clock'
 import { followSession } from '@/lib/session'
+import { takeCommands } from '@/lib/sessionNotice'
 import { boot } from '@/state'
 import App from './App.tsx'
 import './index.css'
@@ -17,13 +18,15 @@ document.addEventListener('gesturestart', (e) => e.preventDefault())
 /*
  * Load everything kept on this device — the settings, the session under way,
  * the tasks and their history — then render: screens never see a loading
- * state, and the first paint has the chosen colour and design. After that
+ * state, and the first paint has the chosen colour and design. The moves
+ * made on the phone's notification while the app was closed go into boot,
+ * which replays them before it settles the session. After that
  * `followDisplay` keeps <html> in step with the LED settings, `followSession`
  * does what a session does off its screen (its end, the notification, the
  * screen kept on), and `followDay` moves "today" on at midnight.
  */
 async function start() {
-  await boot()
+  await boot(await takeCommands())
   followDisplay()
   followSession()
   followDay()

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The status bar's icon for a session's end (lib/notifications › smallIcon): a seven-segment 8, as in
+<!-- The status bar's icon for a session's countdown and end (session/SessionNotifications): a seven-segment 8, as in
      public/favicon.svg. Android draws it white and tints it the LED colour. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"

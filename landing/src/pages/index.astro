@@ -4,9 +4,8 @@ import DesignMarquee from '../components/DesignMarquee.astro'
 import Heatmap from '../components/Heatmap.astro'
 import HeroGrid from '../components/HeroGrid.astro'
 import Base from '../layouts/Base.astro'
-import { DOWNLOADS, WEB_APP_URL } from '../lib/downloads'
+import { DOWNLOADS, REPO_URL, WEB_APP_URL } from '../lib/downloads'
 
-const REPO_URL = 'https://github.com/WinterCore/detonato-app'
 const POSY_URL = 'https://michieldb.nl'
 
 const FEATURES = [
@@ -49,7 +48,6 @@ const FEATURES = [
           <div class="flex flex-wrap items-center justify-center gap-3">
             <a
               href={DOWNLOADS.android.href}
-              download
               class="inline-flex items-center gap-2.5 rounded-full bg-led px-5 py-2.5 font-medium text-on-led shadow-[0_0_28px_-8px_var(--led)] transition hover:brightness-110"
             >
               <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"></path></svg>
@@ -58,7 +56,6 @@ const FEATURES = [
             </a>
             <a
               href={DOWNLOADS.iphone.href}
-              download
               class="inline-flex items-center gap-2.5 rounded-full border border-led-ring px-5 py-2.5 font-medium text-led transition-colors hover:bg-led hover:text-on-led"
             >
               <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"></path></svg>

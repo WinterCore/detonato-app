@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { Toaster } from '@/components/Toaster'
-import { onEndTapped } from '@/lib/notifications'
+import { onNoticeTapped } from '@/lib/notifications'
 import { useScrollToTop } from '@/navigation/back'
 import { History } from '@/screens/history/views/History'
 import { Settings } from '@/screens/settings/views/Settings'
@@ -12,15 +12,25 @@ import { Today } from '@/screens/today/views/Today'
 
 const Glyphs = lazy(() => import('@/dev/Glyphs'))
 
-/** A session's notification, tapped: the app opens on the timer, whatever screen it was left on. */
-function useEndTaps(): void {
+/**
+ * A session's notification, tapped: the app opens on the timer, whatever
+ * screen it was left on. One already there stays put, so a tap reported
+ * twice doesn't stack the timer on itself.
+ */
+function useNoticeTaps(): void {
   const navigate = useNavigate()
-  useEffect(() => onEndTapped(() => navigate('/timer')), [navigate])
+  useEffect(() => {
+    return onNoticeTapped(() => {
+      if (window.location.pathname !== '/timer') {
+        navigate('/timer')
+      }
+    })
+  }, [navigate])
 }
 
 function Screens() {
   useScrollToTop()
-  useEndTaps()
+  useNoticeTaps()
   return (
     <Routes>
       <Route path="/" element={<Today />} />

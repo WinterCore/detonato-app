@@ -25,6 +25,17 @@
 
         </activity>
 
+        <!-- The session's countdown: its buttons, the end's alarm, and coming back after a reboot
+             (session/SessionReceiver). Only this app's own intents and the system reach it. -->
+        <receiver
+            android:name=".session.SessionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -40,9 +51,11 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- A session's end is a timer's alarm, and must come on time (lib/notifications).
+    <!-- A session's end is a timer's alarm, and must come on time (session/SessionNotifications).
          Android 13+ grants USE_EXACT_ALARM to an app whose core is a timer, with no ask;
          Android 12 grants SCHEDULE_EXACT_ALARM at install, and needs nothing past it. -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- A reboot loses the session's alarm and countdown; SessionReceiver sets them again. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" tools:replace="android:maxSdkVersion" />
 </manifest>

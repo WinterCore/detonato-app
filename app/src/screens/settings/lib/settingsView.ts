@@ -14,6 +14,7 @@ import {
   type SoundId,
   type WeekStart,
 } from '@/core/settings'
+import { minutesLabel } from '@/core/timer'
 import type { Glyph } from '@/core/types'
 
 /** One choice of a group where one is on: a swatch, a segmented button, a sound. */
@@ -37,8 +38,6 @@ export function styleLine(glyph: Glyph, glyphs: Glyph[]): string {
   return glyph.digits ? line : `${line} · no digit map`
 }
 
-/** «25 minutes». */
-export const minutesLabel = (n: number) => (n === 1 ? '1 minute' : `${n} minutes`)
 
 /** Everything the settings screen shows, from the settings. */
 export function settingsView(s: Settings, glyph: Glyph, glyphs: Glyph[]) {

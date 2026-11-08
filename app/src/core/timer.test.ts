@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   clockText,
   IDLE,
+  minutesLabel,
+  parseCommands,
   parseTimer,
   pauseTimer,
+  replay,
   resetTimer,
   resumeTimer,
   sessionRecord,
@@ -135,5 +138,62 @@ describe('sessionRecord', () => {
   it('logs nothing for a quick session, or one not done', () => {
     expect(sessionRecord(settleTimer(startTimer(25, T0, QUICK), T0 + 25 * MIN))).toBeNull()
     expect(sessionRecord(startTimer(25, T0, OF))).toBeNull()
+  })
+})
+
+describe('replay', () => {
+  const running = startTimer(25, T0, OF)
+
+  it('pauses where the notification paused it, and resumes from there', () => {
+    const paused = replay(running, [{ move: 'pause', at: T0 + 10 * MIN }])
+    expect(paused).toEqual({ phase: 'paused', length: 25 * MIN, left: 15 * MIN, ...OF })
+    // Resumed a while later: the end moves on by the time it was held.
+    const resumed = replay(running, [
+      { move: 'pause', at: T0 + 10 * MIN },
+      { move: 'resume', at: T0 + 40 * MIN },
+    ])
+    expect(resumed).toEqual({ phase: 'running', length: 25 * MIN, endsAt: T0 + 55 * MIN, ...OF })
+  })
+
+  it('keeps a session paused before its end from ending, however late the app opens', () => {
+    const paused = replay(running, [{ move: 'pause', at: T0 + 10 * MIN }])
+    expect(settleTimer(paused, T0 + 9 * 60 * MIN)).toBe(paused)
+  })
+
+  it('calls a stopped session off', () => {
+    expect(replay(running, [{ move: 'stop', at: T0 + 5 * MIN }])).toBe(IDLE)
+  })
+
+  it('leaves a session that ended before a move done', () => {
+    const done = { phase: 'done', length: 25 * MIN, endedAt: T0 + 25 * MIN, ...OF }
+    expect(replay(running, [{ move: 'stop', at: T0 + 30 * MIN }])).toEqual(done)
+    expect(replay(running, [{ move: 'pause', at: T0 + 30 * MIN }, { move: 'resume', at: T0 + 31 * MIN }])).toEqual(done)
+  })
+
+  it('changes nothing with no moves', () => {
+    expect(replay(running, [])).toBe(running)
+  })
+})
+
+describe('parseCommands', () => {
+  it('reads the moves the phone hands over', () => {
+    const moves = [
+      { move: 'pause', at: T0 },
+      { move: 'stop', at: T0 + MIN },
+    ]
+    expect(parseCommands(JSON.parse(JSON.stringify(moves)))).toEqual(moves)
+  })
+
+  it('reads nothing from anything broken', () => {
+    expect(parseCommands(null)).toEqual([])
+    expect(parseCommands([{ move: 'skip', at: T0 }])).toEqual([])
+    expect(parseCommands([{ move: 'pause' }])).toEqual([])
+  })
+})
+
+describe('minutesLabel', () => {
+  it('counts minutes', () => {
+    expect(minutesLabel(1)).toBe('1 minute')
+    expect(minutesLabel(25)).toBe('25 minutes')
   })
 })

@@ -63,7 +63,7 @@ export function Settings() {
             <Notice
               icon={BellSlashIcon}
               title="Notifications are off"
-              line="A session’s end can’t reach you with the app closed until the phone allows Detonato to notify."
+              line="A session’s countdown and end can’t reach you with the app closed until the phone allows Detonato to notify."
               action="Open phone settings"
               onOpen={s.openPhoneSettings}
             />
@@ -72,8 +72,8 @@ export function Settings() {
             {s.notify !== null && (
               <SwitchRow
                 checked={s.notify}
-                label="Notify when a session ends"
-                meta="Even with the app closed or the phone locked"
+                label="Notifications"
+                meta="The countdown, with Pause and Stop, and the end"
                 onClick={() => void s.toggleNotify()}
               />
             )}

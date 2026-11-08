@@ -15,6 +15,9 @@ import type { SessionRecord, TaskId } from '@/core/types'
  *
  *   idle ─start→ running ─pause→ paused ─resume→ running ─(its end passes)→ done
  *   running, paused ─reset→ paused at the full length;  any ─stop→ idle
+ *
+ * The phone's notification makes the same moves while the app may be
+ * closed, and the app replays them when it next runs (`replay`).
  */
 
 /** Whose session it is: a task's, logged when it ends, or a quick one (null), logged nowhere. And the day it started on. */
@@ -38,6 +41,14 @@ const MINUTE = 60_000
 /** A session's length in whole minutes. */
 export function minutesOf(t: { length: number }): number {
   return Math.round(t.length / MINUTE)
+}
+
+/** «1 minute», «25 minutes». */
+export function minutesLabel(n: number): string {
+  if (n === 1) {
+    return '1 minute'
+  }
+  return `${n} minutes`
 }
 
 /** A new session of `minutes` for `of`, running from `now`. */
@@ -82,6 +93,44 @@ export function settleTimer(t: TimerState, now: number): TimerState {
   return { phase: 'done', length: t.length, endedAt: t.endsAt, taskId: t.taskId, day: t.day }
 }
 
+/**
+ * A move made on the phone's notification or Live Activity, at `at`. It may
+ * have been made with the app closed, so it's kept until the app runs and
+ * replays it.
+ */
+export interface NoticeCommand {
+  move: 'pause' | 'resume' | 'stop'
+  at: number
+}
+
+function command(t: TimerState, c: NoticeCommand): TimerState {
+  switch (c.move) {
+    case 'pause':
+      return pauseTimer(t, c.at)
+    case 'resume':
+      return resumeTimer(t, c.at)
+    case 'stop':
+      return IDLE
+  }
+}
+
+/**
+ * `t` after the notification's moves, in order, each at its own time. A
+ * session whose end came between them stays done: nothing after it can
+ * pause or stop what was already over.
+ */
+export function replay(t: TimerState, commands: readonly NoticeCommand[]): TimerState {
+  let next = t
+  for (const c of commands) {
+    next = settleTimer(next, c.at)
+    if (next.phase === 'done') {
+      return next
+    }
+    next = command(next, c)
+  }
+  return next
+}
+
 /** Milliseconds left. An idle timer has the whole of the next session ahead of it. */
 export function timeLeft(t: TimerState, now: number, idleLength: number): number {
   switch (t.phase) {
@@ -123,4 +172,15 @@ export function parseTimer(raw: unknown): TimerState {
   const t = read.data
   if (t.phase === 'paused' && t.left > t.length) return IDLE
   return t
+}
+
+const commands = z.array(z.object({ move: z.enum(['pause', 'resume', 'stop']), at: time }))
+
+/** The notification's moves as the phone hands them over; none for anything that isn't a sound list. */
+export function parseCommands(raw: unknown): NoticeCommand[] {
+  const read = commands.safeParse(raw)
+  if (!read.success) {
+    return []
+  }
+  return read.data
 }

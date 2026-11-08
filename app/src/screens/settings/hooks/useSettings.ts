@@ -58,7 +58,7 @@ export function useSettings() {
     ...view,
     version: VERSION,
     soundOpen,
-    /** «Notify when a session ends», on or off; null on the web, which can't. */
+    /** «Notifications» — the countdown and the end — on or off; null on the web, which can't. */
     notify: canNotify() ? s.notify : null,
     /** The phone refuses notifications, so none arrive until it's allowed there — said only while the switch is on. */
     notifyBlocked: blocked && s.notify,
