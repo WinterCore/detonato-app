@@ -276,6 +276,10 @@ maps its files, and screens import from `@/state` only (lint enforces it).
   Android's, which `navigation/back › followBackButton` sends through the
   history, leaving the app when there's none) closes the sheet instead of
   leaving the screen. Escape closes it too. Every sheet uses it.
+- **Screens leave by going back** (`navigation/back › useBack`, and
+  `useLeaveWhen` for a screen whose subject is gone, like the timer with no
+  session), never by navigating on to `/`: each new entry for Today costs
+  one more back press before Android's back leaves the app.
 
 ## The segment display
 

@@ -1,5 +1,4 @@
 import { CaretLeftIcon, SlidersHorizontalIcon, SunIcon } from '@phosphor-icons/react'
-import { Navigate } from 'react-router-dom'
 import { Display } from '@/components/segments'
 import { useTimer } from '@/screens/timer/hooks/useTimer'
 import { Button, IconButton, Pips, TopBar } from '@/ui'
@@ -8,7 +7,9 @@ import { Controls } from './Controls'
 /** The timer: the task, its session counting down in segments, and what to do with it. */
 export function Timer() {
   const t = useTimer()
-  if (!t) return <Navigate to="/" replace />
+  if (!t) {
+    return null
+  }
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-app flex-col">

@@ -73,6 +73,29 @@ test('reset starts the session over, held; stop calls it off', async ({ page }) 
   expect(await page.evaluate(() => localStorage.getItem('detonato.timer'))).toBeNull()
 })
 
+test('leaving the timer goes back, so one more back leaves the app', async ({ page }) => {
+  // React Router numbers its entries in the history: 0 is the one the app opened on.
+  const entry = () => page.evaluate(() => (window.history.state as { idx: number }).idx)
+  await page.goto('/')
+
+  // The back arrow; the session carries on.
+  await page.getByRole('button', { name: 'Start a quick session' }).click()
+  await page.getByRole('button', { name: 'Back', exact: true }).click()
+  await expect(page).toHaveURL(/\/$/)
+  expect(await entry()).toBe(0)
+
+  await page.getByRole('button', { name: 'Quick session, running. Open the timer' }).click()
+  await page.getByRole('button', { name: 'Stop' }).click()
+  await expect(page).toHaveURL(/\/$/)
+  expect(await entry()).toBe(0)
+
+  await page.getByRole('button', { name: 'Start a quick session' }).click()
+  await page.clock.runFor(25 * MIN)
+  await page.getByRole('button', { name: 'Back to Today' }).click()
+  await expect(page).toHaveURL(/\/$/)
+  expect(await entry()).toBe(0)
+})
+
 test('a running session outlives a reload', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Start a quick session' }).click()

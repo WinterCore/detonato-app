@@ -1,6 +1,6 @@
 import { App } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
-import { useCallback, useLayoutEffect } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 /**
@@ -15,6 +15,25 @@ export function useBack(fallback: string): () => void {
     if (idx > 0) navigate(-1)
     else navigate(fallback, { replace: true })
   }, [navigate, fallback])
+}
+
+/**
+ * Leave the screen, as `useBack` does, once `gone` is true: what it showed
+ * is no more. Going back, not on to a new entry, keeps the history as it
+ * was before the screen opened, so one back still leaves the app from the
+ * first screen.
+ */
+export function useLeaveWhen(gone: boolean, fallback: string): void {
+  const back = useBack(fallback)
+  // Once only: React's strict mode runs a new effect twice, and two steps back would overshoot.
+  const left = useRef(false)
+  useEffect(() => {
+    if (!gone || left.current) {
+      return
+    }
+    left.current = true
+    back()
+  }, [gone, back])
 }
 
 /** Each screen opens at its top. */
