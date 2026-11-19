@@ -35,7 +35,7 @@ and a quick session. History (`/history`), Tasks (`/tasks`), the timer
 Run these from `app/` or the root:
 
 ```sh
-pnpm dev     # Vite dev server on port 5190; /dev/glyphs shows 0–9 in every design
+pnpm dev     # Vite dev server on port 5190; /dev/glyphs shows labelled 0–10 samples in every design
 pnpm test    # vitest (in America/New_York, so day math always meets DST)
 pnpm e2e     # Playwright on the system Chrome, against a test build of its own (port 5293)
 pnpm lint    # oxlint
@@ -288,8 +288,8 @@ maps its files, and screens import from `@/state` only (lint enforces it).
   and works out which segments make each digit.
   - A segment's index is its order in the sheet, so **never reorder shapes
     in the sheet**.
-  - 14 designs the geometry can't map are drawn by hand in the script
-    (`HAND`, `HAND_DIGITS`, and No Compromise's grid). Check any change on
+  - 19 designs the geometry can't map are drawn by hand in the script
+    (`HAND` and `HAND_DIGITS`). Check any change on
     `/dev/glyphs`. A design left without a map lights every segment.
   - Some designs can't tell every digit apart (0 and 8 without a middle
     bar; more in 4 Segments). The picker says so, from the maps.

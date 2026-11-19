@@ -75,50 +75,108 @@ FAMILIES = {
 # digit by digit. Each segment gets a role in SEVEN's letters: 'f' lights with f, 'af'
 # with a or f (a corner piece), '&bg' only with both (an inner corner), '' never.
 HAND = {
-    # The middle bar is split in three; the top and bottom wrap a corner.
-    'sports-black-9-1': ['e', 'g', 'g', 'f', 'g', 'd', 'c', 'a', 'b'],
-    'sports-black-9-2': ['f', 'g', 'g', 'e', 'b', 'd', 'g', 'c', 'a'],
-    'sports-black-9-3': ['e', 'f', 'g', 'b', 'g', 'g', 'c', 'd', 'a'],
-    'sports-black-9-4': ['g', 'f', 'e', 'g', 'd', 'c', 'g', 'a', 'b'],
-    # Square corners on the left, joints at the sides of the middle bar, slivers in the counters.
-    'half-bubble-17-seg': ['b', 'f', 'a', 'af', 'e', 'de', 'c', 'd', 'g', 'ef', '&bg', 'g', '&cg', 'bc',
+    # The middle bar is split in three. Its outer pieces also join the verticals:
+    # both light for 0, only the right for 1 and 7; the centre stays dark.
+    'sports-black-9-1': ['e', 'efg', 'g', 'f', 'bcg', 'd', 'c', 'a', 'b'],
+    'sports-black-9-2': ['f', 'g', 'efg', 'e', 'b', 'd', 'bcg', 'c', 'a'],
+    'sports-black-9-3': ['e', 'f', 'g', 'b', 'efg', 'bcg', 'c', 'd', 'a'],
+    'sports-black-9-4': ['g', 'f', 'e', 'efg', 'd', 'c', 'bcg', 'a', 'b'],
+    # Inner middle joints also connect the verticals in 0, 1 and 7. Each outer
+    # wedge fills a straight side only when both its upper and lower strokes light.
+    'half-bubble-17-seg': ['b', 'f', 'a', 'af', 'e', 'de', 'c', 'd', 'bcg', '&ef', '&bg', 'efg', '&cg', '&bc',
                            '&eg', '&fg', 'g'],
     # The middle runs as a slant; the piece at the right of it joins b and c too.
+    'solid-11-regular': ['g', 'bcg', 'g', 'e', 'c', 'a', 'e', 'd', 'f', 'b', ''],
     'solid-11-bold': ['', 'f', 'e', 'bcg', 'g', 'a', 'g', 'c', 'd', 'b', '&de'],
-    # The two centre strokes are a 1, and the stem of 7 and of 2; the small tick is the middle.
-    'sharp-traced': ['b', 'a', '', 'f', 'g', 'e', 'c', '', 'd'],
-    'sharp-bold': ['b', 'a', '', 'f', 'g', 'e', 'c', '', 'd'],
+    # Seven outer bars plus an upper and lower diagonal, used in the overrides below.
+    '9-segments-1': ['f', '', 'b', '', 'a', 'e', 'c', 'd', 'g'],
+    '9-segments-2': ['f', 'e', 'b', '', '', 'g', 'c', 'd', 'a'],
     # Five pieces: the lower two hook round to the bottom. 0 and 8 match; 7 is drawn short, apart from 3.
     'sharp-5-1': ['b', 'a', 'f', 'e', 'c'],
     # Four quarters, lit with their side: several digits share a shape.
     '4-segments-1': ['b', 'f', 'c', 'e'],
-    # 15 is the decimal point, never lit.
-    '14-segment-1': ['g', 'g', 'd', '', 'b', 'c', '', 'e', '', '', 'a', 'f', 'g', '', '', ''],
     # Drawn outright below.
-    'round-5-1': [], 'x-ugly-9-1': [],
+    'sharp-traced': [], 'sharp-bold': [], 'round-5-1': [], 'x13-1': [], 'x-ugly-9-1': [],
+    '14-segment-1': [], '14-segment-2': [], 'no-compromise-1': [],
+}
+# Sharp's script digits share segment order in both drawings. The zero is a lower
+# loop, 6 uses the upper-right curve, and only 4 uses the little middle-right tick.
+# Digit sequence: https://www.youtube.com/shorts/oMmxs_z5rMs
+SHARP_DIGITS = {
+    0: [5, 6, 8],
+    1: [2, 7],
+    2: [0, 1, 5, 8],
+    3: [0, 1, 6, 8],
+    4: [2, 3, 4, 7],
+    5: [1, 3, 6, 8],
+    6: [0, 5, 6, 8],
+    7: [0, 1, 7],
+    8: [0, 1, 3, 5, 6, 8],
+    9: [0, 1, 3, 7],
 }
 # Digits a role table can't draw, given outright: segment indexes, 0–9.
 HAND_DIGITS = {
-    'sharp-traced': {1: [2, 7], 2: [1, 0, 7, 8], 7: [1, 2, 7]},
-    'sharp-bold': {1: [2, 7], 2: [1, 0, 7, 8], 7: [1, 2, 7]},
+    # The lower diagonal replaces the stepped leg of 2 and the upright tails of 7 and 9.
+    'solid-11-regular': {2: [0, 1, 3, 5, 7, 9, 10], 7: [0, 1, 3, 5, 9, 10], 9: [0, 1, 2, 3, 5, 8, 9, 10]},
+    'solid-11-bold': {2: [0, 3, 4, 5, 8, 9, 10], 7: [0, 3, 4, 5, 9, 10], 9: [0, 1, 3, 4, 5, 6, 9, 10]},
+    # Upper diagonal: the slanted side of 4. Lower diagonal: the leg of 2 and tails
+    # of 7 and 9. The middle bar stays off in 2 and 7.
+    '9-segments-1': {2: [2, 3, 4, 7], 4: [1, 2, 6, 8], 7: [2, 3, 4], 9: [0, 2, 3, 4, 8]},
+    '9-segments-2': {2: [2, 3, 7, 8], 4: [2, 4, 5, 6], 7: [2, 3, 8], 9: [0, 2, 3, 5, 8]},
+    'sharp-traced': SHARP_DIGITS,
+    'sharp-bold': SHARP_DIGITS,
     'sharp-5-1': {7: [1, 0]},
     # Two rings: the top one in three arcs, the bottom one in two. 0 and 8 match.
     'round-5-1': {0: [0, 1, 2, 3, 4], 1: [2, 3], 2: [0, 2, 4], 3: [0, 2, 3], 4: [1, 2, 3], 5: [0, 1, 3],
                   6: [0, 1, 3, 4], 7: [0, 2], 8: [0, 1, 2, 3, 4], 9: [0, 1, 2, 3]},
-    # Two full-height sides around an X: 2 is a Z, 5 an S, 3 a Ʒ, 8 the box with its X.
-    'x-ugly-9-1': {0: [1, 0, 5, 6], 1: [0], 2: [5, 4, 3, 6], 3: [5, 4, 7, 6], 4: [2, 0], 5: [5, 2, 7, 6],
-                   6: [5, 1, 3, 7, 6], 7: [5, 4, 3], 8: [0, 1, 2, 3, 4, 5, 6, 7], 9: [5, 2, 4, 0, 6]},
-}
-# No Compromise is a 3×5 grid whose cells are cut by a slant and rounded off at the corners.
-# Each cell's pieces inside the outline light with the 3×5 font; the corner pieces outside
-# it (0, 1, 2, 3, 4) never do, so corners stay round; the slivers at the middle of each side
-# (33, 21) light where a side runs straight through; 5, beside the grid, never lights.
-NO_COMPROMISE_CELLS = {
-    (0, 0): [15], (1, 0): [14], (2, 0): [7, 6],
-    (0, 1): [13, 24], (1, 1): [8, 18], (2, 1): [11, 12],
-    (0, 2): [31], (1, 2): [29, 23], (2, 2): [10, 22],
-    (0, 3): [20, 26], (1, 3): [16, 9], (2, 3): [30, 17],
-    (0, 4): [25, 34], (1, 4): [32, 19], (2, 4): [28, 27],
+    # Match the reference's diagonal strokes: flagged 1, slashed 0, hourglass 8,
+    # and diagonal stems in 6, 7 and 9. The outer side wedges belong only to 0, 1 and 4.
+    'x13-1': {
+        0: [0, 1, 2, 3, 5, 6, 8, 9, 10, 11, 12],
+        1: [0, 2, 3, 8],
+        2: [0, 1, 5, 6, 8, 10, 11],
+        3: [0, 1, 3, 6, 7, 8, 11],
+        4: [0, 2, 3, 4, 6, 7, 8, 12],
+        5: [1, 3, 4, 6, 7, 11, 12],
+        6: [0, 3, 5, 6, 7, 8, 10, 11],
+        7: [0, 1, 5, 6, 8, 10],
+        8: [0, 1, 3, 4, 5, 6, 7, 8, 10, 11, 12],
+        9: [0, 1, 4, 5, 6, 8, 10, 12],
+    },
+    # The reference uses the X for every digit. Full-height sides frame the slashed
+    # zero; only 1 also uses the right side, with an upper diagonal for its flag.
+    'x-ugly-9-1': {0: [0, 1, 3, 4, 5, 6], 1: [0, 4], 2: [3, 4, 5, 6], 3: [4, 5, 6, 7],
+                   4: [2, 4, 7], 5: [2, 5, 6, 7], 6: [3, 4, 6, 7], 7: [3, 4, 5],
+                   8: [2, 3, 4, 5, 6, 7], 9: [2, 3, 4, 5]},
+    # Reference 14-segment digits: slashed zero, half middle bars in 2, 3 and 5,
+    # diagonal strokes in 2, 3, 5 and 7, and a centred lower stem in 7.
+    # Segment 15 of the first variant is the decimal point and stays dark.
+    '14-segment-1': {
+        0: [2, 4, 5, 6, 7, 8, 10, 11], 1: [4, 5], 2: [0, 2, 4, 8, 10],
+        3: [0, 2, 5, 6, 10], 4: [0, 1, 4, 5, 11, 12], 5: [0, 2, 5, 10, 13],
+        6: [0, 1, 2, 5, 7, 10, 11, 12], 7: [6, 9, 10],
+        8: [0, 1, 2, 4, 5, 7, 10, 11, 12], 9: [0, 1, 4, 5, 10, 11, 12],
+    },
+    '14-segment-2': {
+        0: [2, 4, 5, 7, 8, 10, 12, 13], 1: [5, 10], 2: [2, 5, 7, 11, 13],
+        3: [4, 7, 10, 11, 13], 4: [0, 5, 10, 11, 12], 5: [3, 7, 10, 11, 13],
+        6: [0, 7, 8, 10, 11, 12, 13], 7: [4, 6, 13],
+        8: [0, 5, 7, 8, 10, 11, 12, 13], 9: [0, 5, 10, 11, 12, 13],
+    },
+    # No Compromise's reference selects pieces independently of the 3×5 cells:
+    # centred 1, diagonal stems, square corners on selected digits, and 4's side mark.
+    'no-compromise-1': {
+        0: [6, 7, 10, 11, 12, 13, 14, 15, 17, 19, 20, 21, 22, 24, 25, 26, 27, 28, 30, 31, 32, 33, 34],
+        1: [8, 9, 14, 16, 18, 19, 23, 24, 29, 32],
+        2: [2, 4, 6, 7, 10, 11, 12, 14, 15, 16, 19, 22, 23, 26, 27, 28, 32, 34],
+        3: [0, 1, 6, 7, 10, 11, 14, 15, 17, 18, 19, 22, 23, 25, 27, 28, 30, 32, 34],
+        4: [0, 4, 5, 6, 7, 8, 10, 11, 12, 14, 17, 21, 22, 23, 24, 27, 28, 29, 30, 31],
+        5: [0, 1, 6, 7, 10, 13, 14, 15, 17, 19, 22, 23, 24, 25, 27, 28, 29, 30, 31, 32, 34],
+        6: [7, 8, 10, 14, 17, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 34],
+        7: [0, 1, 2, 6, 7, 10, 11, 14, 15, 16, 18, 23, 26, 32, 34],
+        8: [6, 7, 10, 11, 12, 13, 14, 15, 17, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 34],
+        9: [6, 7, 9, 10, 11, 12, 13, 14, 15, 19, 21, 22, 23, 24, 28, 29, 30, 31],
+    },
 }
 
 # Standard seven-segment table, a..g = 0..6.
@@ -147,17 +205,22 @@ FONT_3x5 = {
     6: ['111', '100', '111', '101', '111'], 7: ['111', '001', '001', '001', '001'],
     8: ['111', '101', '111', '101', '111'], 9: ['111', '101', '111', '001', '111'],
 }
+# Both 10-segment Fake 3×5 designs join the top-middle and top-right cells.
+# Give 1 a short cap so the shared segment lights and its stem reaches the top.
+FONT_FAKE_3x5_10 = {**FONT_3x5, 1: ['011', *FONT_3x5[1][1:]]}
+
+# Fake 5×7's 18-segment reference: diagonal pairs, rounded counters and dotted zero.
 FONT_5x7 = {
-    0: ['11111', '10001', '10001', '10001', '10001', '10001', '11111'],
-    1: ['00001', '00001', '00001', '00001', '00001', '00001', '00001'],
-    2: ['11111', '00001', '00001', '11111', '10000', '10000', '11111'],
-    3: ['11111', '00001', '00001', '11111', '00001', '00001', '11111'],
-    4: ['10001', '10001', '10001', '11111', '00001', '00001', '00001'],
-    5: ['11111', '10000', '10000', '11111', '00001', '00001', '11111'],
-    6: ['11111', '10000', '10000', '11111', '10001', '10001', '11111'],
-    7: ['11111', '00001', '00001', '00001', '00001', '00001', '00001'],
-    8: ['11111', '10001', '10001', '11111', '10001', '10001', '11111'],
-    9: ['11111', '10001', '10001', '11111', '00001', '00001', '11111'],
+    0: ['01110', '10011', '10101', '10001', '10101', '11001', '01110'],
+    1: ['00001', '00011', '00101', '00001', '00001', '00001', '00001'],
+    2: ['01110', '10001', '00001', '00010', '00100', '01000', '11111'],
+    3: ['11111', '00010', '00100', '01110', '00001', '10001', '01110'],
+    4: ['00001', '00011', '00101', '01111', '00001', '00001', '00001'],
+    5: ['11111', '10000', '10000', '11110', '00001', '10001', '01110'],
+    6: ['00001', '00010', '00100', '01110', '10001', '10001', '01110'],
+    7: ['11111', '00001', '00001', '00010', '00100', '01000', '10000'],
+    8: ['01110', '10001', '10001', '01110', '10001', '10001', '01110'],
+    9: ['01110', '10001', '10001', '01110', '00100', '01000', '10000'],
 }
 
 
@@ -342,19 +405,6 @@ def map_hand(slug):
     return [sorted(over[d]) if d in over else [i for i, r in enumerate(roles) if lit(r, d)] for d in range(10)]
 
 
-def map_no_compromise():
-    digits = []
-    for d in range(10):
-        on = lambda c, r: FONT_3x5[d][r][c] == '1'
-        lit = [i for (c, r), pieces in NO_COMPROMISE_CELLS.items() if on(c, r) for i in pieces]
-        if on(0, 1) and on(0, 2) and on(0, 3):
-            lit.append(33)
-        if on(2, 1) and on(2, 2) and on(2, 3):
-            lit.append(21)
-        digits.append(sorted(lit))
-    return digits
-
-
 def main():
     svg_path = sys.argv[1]
     out_path = sys.argv[2]
@@ -377,10 +427,11 @@ def main():
         slug = re.sub(r'[^a-z0-9]+', '-', f'{family} {variant}'.lower()).strip('-')
         if slug in HAND:
             digits, how = map_hand(slug), 'hand'
-        elif slug == 'no-compromise-1':
-            digits, how = map_no_compromise(), 'hand'
         elif family == '3×5 Matrix' or (family == 'Fake 3×5'):
-            digits, how = map_matrix(segs, B, box, FONT_3x5, 3, 5), 'matrix'
+            font = FONT_3x5
+            if family == 'Fake 3×5' and len(segs) == 10:
+                font = FONT_FAKE_3x5_10
+            digits, how = map_matrix(segs, B, box, font, 3, 5), 'matrix'
         elif family == 'Fake 5×7' and len(segs) != 7:
             digits, how = map_matrix(segs, B, box, FONT_5x7, 5, 7), 'matrix'
         elif len(segs) == 7:
